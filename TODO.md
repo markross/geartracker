@@ -4,7 +4,7 @@
 
 - [x] **Stage 1: Project Scaffolding & CI** — Next.js, TypeScript, Tailwind, Vitest, Playwright, smoke test
 - [x] **Stage 2: Database Schema & Supabase Setup** — migrations, RLS, seed data, CRUD helpers
-- [ ] **Stage 3: Auth with Strava OAuth** — OAuth flow, token storage/refresh, login page
+- [x] **Stage 3: Auth with Strava OAuth** — OAuth flow, token storage/refresh, login page
 - [ ] **Stage 4: Bike Management** — CRUD API + UI for bikes
 - [ ] **Stage 5: Component Management** — CRUD API + UI for components on bikes
 - [ ] **Stage 6: Strava Manual Sync** — fetch rides from Strava, auto-match to bikes, dedup
