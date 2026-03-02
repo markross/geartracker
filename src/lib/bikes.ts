@@ -14,7 +14,7 @@ export async function updateBike(
   id: string,
   updates: BikeUpdate
 ) {
-  return supabase.from("bikes").update(updates).eq("id", id);
+  return supabase.from("bikes").update(updates).eq("id", id).select().single();
 }
 
 export async function deleteBike(supabase: SupabaseClient, id: string) {

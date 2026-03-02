@@ -78,7 +78,9 @@ describe("createBike", () => {
 
 describe("updateBike", () => {
   it("updates a bike by id", async () => {
-    mockEq.mockResolvedValue({ data: { ...mockBike, name: "Gravel Bike" }, error: null });
+    const mockSingleUpdate = vi.fn().mockResolvedValue({ data: { ...mockBike, name: "Gravel Bike" }, error: null });
+    const mockSelectUpdate = vi.fn().mockReturnValue({ single: mockSingleUpdate });
+    mockEq.mockReturnValue({ select: mockSelectUpdate });
     mockUpdate.mockReturnValue({
       eq: mockEq,
     });
@@ -88,6 +90,7 @@ describe("updateBike", () => {
     expect(mockFrom).toHaveBeenCalledWith("bikes");
     expect(mockUpdate).toHaveBeenCalledWith({ name: "Gravel Bike" });
     expect(mockEq).toHaveBeenCalledWith("id", "bike-1");
+    expect(result.data).toEqual({ ...mockBike, name: "Gravel Bike" });
     expect(result.error).toBeNull();
   });
 });
