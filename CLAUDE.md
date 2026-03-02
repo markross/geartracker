@@ -28,7 +28,7 @@ Bike component wear tracking app synced with Strava.
 - Use `vitest` for unit/integration, `playwright` for e2e
 
 ## Current Stage
-**Stage 1: Project Scaffolding & CI** — complete
+**Stage 2: Database Schema & Supabase Setup** — complete
 
 ## Key Decisions
 - Strava OAuth for auth (no separate email/password)

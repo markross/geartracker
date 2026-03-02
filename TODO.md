@@ -3,7 +3,7 @@
 ## Stages
 
 - [x] **Stage 1: Project Scaffolding & CI** — Next.js, TypeScript, Tailwind, Vitest, Playwright, smoke test
-- [ ] **Stage 2: Database Schema & Supabase Setup** — migrations, RLS, seed data, CRUD helpers
+- [x] **Stage 2: Database Schema & Supabase Setup** — migrations, RLS, seed data, CRUD helpers
 - [ ] **Stage 3: Auth with Strava OAuth** — OAuth flow, token storage/refresh, login page
 - [ ] **Stage 4: Bike Management** — CRUD API + UI for bikes
 - [ ] **Stage 5: Component Management** — CRUD API + UI for components on bikes
