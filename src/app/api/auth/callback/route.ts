@@ -19,38 +19,43 @@ export async function GET(request: NextRequest) {
 
     const supabase = createSupabaseAdmin();
 
-    // Create or get auth user using Strava athlete ID as identifier
+    // Create or get auth user using Strava athlete ID as stable key
     const email = athlete.email || `${athlete.id}@strava.athlete`;
-    const { data: authData, error: authError } =
-      await supabase.auth.admin.createUser({
-        email,
-        email_confirm: true,
-        user_metadata: {
-          strava_athlete_id: athlete.id,
-          full_name: `${athlete.firstname} ${athlete.lastname}`,
-        },
-      });
+    const metadata = {
+      strava_athlete_id: athlete.id,
+      full_name: `${athlete.firstname} ${athlete.lastname}`,
+    };
 
-    // If user already exists, look them up
+    // Check if user already exists in our users table by strava_athlete_id
     let userId: string;
-    if (authError?.message?.includes("already been registered")) {
-      const { data: existingUsers } =
-        await supabase.auth.admin.listUsers();
-      const existing = existingUsers?.users?.find(
-        (u) => u.email === email
-      );
-      if (!existing) {
+    const { data: existingProfile } = await supabase
+      .from("users")
+      .select("id")
+      .eq("strava_athlete_id", athlete.id)
+      .maybeSingle();
+
+    if (existingProfile) {
+      userId = existingProfile.id;
+      // Update auth metadata
+      await supabase.auth.admin.updateUserById(userId, {
+        user_metadata: metadata,
+      });
+    } else {
+      // Create new auth user
+      const { data: newUser, error: createError } =
+        await supabase.auth.admin.createUser({
+          email,
+          email_confirm: true,
+          user_metadata: metadata,
+        });
+
+      if (createError || !newUser.user) {
+        console.error("Auth create error", createError);
         return NextResponse.redirect(
-          new URL("/login?error=user_lookup_failed", request.url)
+          new URL("/login?error=auth_failed", request.url)
         );
       }
-      userId = existing.id;
-    } else if (authError) {
-      return NextResponse.redirect(
-        new URL("/login?error=auth_failed", request.url)
-      );
-    } else {
-      userId = authData.user.id;
+      userId = newUser.user.id;
     }
 
     // Upsert user profile with Strava tokens
@@ -96,9 +101,11 @@ export async function GET(request: NextRequest) {
 
     // Fallback: redirect to home
     return NextResponse.redirect(new URL("/", request.url));
-  } catch {
+  } catch (err) {
+    console.error("OAuth callback error:", err);
+    const message = err instanceof Error ? err.message : "unknown";
     return NextResponse.redirect(
-      new URL("/login?error=exchange_failed", request.url)
+      new URL(`/login?error=exchange_failed&detail=${encodeURIComponent(message)}`, request.url)
     );
   }
 }
