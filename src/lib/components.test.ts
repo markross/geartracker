@@ -79,12 +79,16 @@ describe("createComponent", () => {
 
 describe("updateComponent", () => {
   it("updates a component by id", async () => {
-    mockEq.mockResolvedValue({ data: { ...mockComponent, name: "KMC X12" }, error: null });
+    const mockSingleUpdate = vi.fn().mockResolvedValue({ data: { ...mockComponent, name: "KMC X12" }, error: null });
+    const mockSelectUpdate = vi.fn().mockReturnValue({ single: mockSingleUpdate });
+    mockEq.mockReturnValue({ select: mockSelectUpdate });
+    mockUpdate.mockReturnValue({ eq: mockEq });
 
     const result = await updateComponent(mockSupabase, "comp-1", { name: "KMC X12" });
 
     expect(mockUpdate).toHaveBeenCalledWith({ name: "KMC X12" });
     expect(mockEq).toHaveBeenCalledWith("id", "comp-1");
+    expect(result.data).toEqual({ ...mockComponent, name: "KMC X12" });
     expect(result.error).toBeNull();
   });
 });
@@ -92,15 +96,16 @@ describe("updateComponent", () => {
 describe("retireComponent", () => {
   it("sets retired_at on a component", async () => {
     const now = "2026-03-01T00:00:00Z";
-    mockEq.mockResolvedValue({
-      data: { ...mockComponent, retired_at: now },
-      error: null,
-    });
+    const mockSingleRetire = vi.fn().mockResolvedValue({ data: { ...mockComponent, retired_at: now }, error: null });
+    const mockSelectRetire = vi.fn().mockReturnValue({ single: mockSingleRetire });
+    mockEq.mockReturnValue({ select: mockSelectRetire });
+    mockUpdate.mockReturnValue({ eq: mockEq });
 
     const result = await retireComponent(mockSupabase, "comp-1", now);
 
     expect(mockUpdate).toHaveBeenCalledWith({ retired_at: now });
     expect(mockEq).toHaveBeenCalledWith("id", "comp-1");
+    expect(result.data).toEqual({ ...mockComponent, retired_at: now });
     expect(result.error).toBeNull();
   });
 });

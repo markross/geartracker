@@ -20,7 +20,7 @@ export async function updateComponent(
   id: string,
   updates: ComponentUpdate
 ) {
-  return supabase.from("components").update(updates).eq("id", id);
+  return supabase.from("components").update(updates).eq("id", id).select().single();
 }
 
 export async function retireComponent(
@@ -31,7 +31,9 @@ export async function retireComponent(
   return supabase
     .from("components")
     .update({ retired_at: retiredAt })
-    .eq("id", id);
+    .eq("id", id)
+    .select()
+    .single();
 }
 
 export async function deleteComponent(supabase: SupabaseClient, id: string) {

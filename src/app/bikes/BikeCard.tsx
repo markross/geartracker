@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { Bike } from "@/lib/types";
 
 interface BikeCardProps {
@@ -13,7 +14,9 @@ export default function BikeCard({ bike, onEdit, onDelete }: BikeCardProps) {
     <div className="rounded-lg border border-zinc-200 p-4" data-testid={`bike-card-${bike.id}`}>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">{bike.name}</h3>
+          <Link href={`/bikes/${bike.id}/components`} className="text-lg font-semibold hover:underline">
+            {bike.name}
+          </Link>
           <span
             className={`text-sm ${bike.is_active ? "text-green-600" : "text-zinc-400"}`}
           >
