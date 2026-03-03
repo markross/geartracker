@@ -103,9 +103,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   } catch (err) {
     console.error("OAuth callback error:", err);
-    const message = err instanceof Error ? err.message : "unknown";
     return NextResponse.redirect(
-      new URL(`/login?error=exchange_failed&detail=${encodeURIComponent(message)}`, request.url)
+      new URL("/login?error=exchange_failed", request.url)
     );
   }
 }

@@ -53,6 +53,18 @@ describe("PUT /api/bikes/[id]", () => {
     expect(res.status).toBe(401);
   });
 
+  it("returns 400 when name is whitespace-only", async () => {
+    mockAuth(mockUser);
+    const req = new Request("http://localhost/api/bikes/bike-1", {
+      method: "PUT",
+      body: JSON.stringify({ name: "   " }),
+    });
+    const res = await PUT(req, { params });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("Name cannot be empty");
+  });
+
   it("returns 400 when no fields to update", async () => {
     mockAuth(mockUser);
     const req = new Request("http://localhost/api/bikes/bike-1", {
@@ -77,7 +89,7 @@ describe("PUT /api/bikes/[id]", () => {
 
     expect(res.status).toBe(200);
     expect(body.bike).toEqual(updated);
-    expect(updateBike).toHaveBeenCalledWith(expect.anything(), "bike-1", { name: "Gravel Bike" });
+    expect(updateBike).toHaveBeenCalledWith(expect.anything(), "bike-1", "user-1", { name: "Gravel Bike" });
   });
 
   it("updates is_active field", async () => {
@@ -128,7 +140,7 @@ describe("DELETE /api/bikes/[id]", () => {
     const res = await DELETE(req, { params });
 
     expect(res.status).toBe(204);
-    expect(deleteBike).toHaveBeenCalledWith(expect.anything(), "bike-1");
+    expect(deleteBike).toHaveBeenCalledWith(expect.anything(), "bike-1", "user-1");
   });
 
   it("returns 500 on database error", async () => {

@@ -5,6 +5,11 @@ vi.mock("@/lib/supabase-server", () => ({
   createSupabaseServerClient: vi.fn(),
 }));
 
+vi.mock("@/lib/auth", () => ({
+  requireUser: vi.fn(),
+  verifyBikeOwnership: vi.fn(),
+}));
+
 vi.mock("@/lib/components", () => ({
   updateComponent: vi.fn(),
   deleteComponent: vi.fn(),
@@ -12,6 +17,7 @@ vi.mock("@/lib/components", () => ({
 }));
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { requireUser, verifyBikeOwnership } from "@/lib/auth";
 import { updateComponent, deleteComponent, retireComponent } from "@/lib/components";
 
 const mockUser = { id: "user-1" };
@@ -30,24 +36,14 @@ const params = { id: "bike-1", componentId: "comp-1" };
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(createSupabaseServerClient).mockResolvedValue({} as any);
+  vi.mocked(requireUser).mockResolvedValue(mockUser as any);
+  vi.mocked(verifyBikeOwnership).mockResolvedValue(true);
 });
-
-function mockAuth(user: typeof mockUser | null) {
-  const supabase = {
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user },
-        error: user ? null : { message: "Not authenticated" },
-      }),
-    },
-  };
-  vi.mocked(createSupabaseServerClient).mockResolvedValue(supabase as any);
-  return supabase;
-}
 
 describe("PUT /api/bikes/[id]/components/[componentId]", () => {
   it("returns 401 when not authenticated", async () => {
-    mockAuth(null);
+    vi.mocked(requireUser).mockResolvedValue(null);
     const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
       method: "PUT",
       body: JSON.stringify({ name: "KMC X12" }),
@@ -57,7 +53,6 @@ describe("PUT /api/bikes/[id]/components/[componentId]", () => {
   });
 
   it("returns 400 when no fields to update", async () => {
-    mockAuth(mockUser);
     const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
       method: "PUT",
       body: JSON.stringify({}),
@@ -66,8 +61,18 @@ describe("PUT /api/bikes/[id]/components/[componentId]", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 400 when name is whitespace-only", async () => {
+    const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
+      method: "PUT",
+      body: JSON.stringify({ name: "   " }),
+    });
+    const res = await PUT(req, { params });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("Name cannot be empty");
+  });
+
   it("returns 400 for invalid component type", async () => {
-    mockAuth(mockUser);
     const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
       method: "PUT",
       body: JSON.stringify({ type: "invalid" }),
@@ -76,8 +81,37 @@ describe("PUT /api/bikes/[id]/components/[componentId]", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 400 for negative max_distance_km", async () => {
+    const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
+      method: "PUT",
+      body: JSON.stringify({ max_distance_km: -100 }),
+    });
+    const res = await PUT(req, { params });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("max_distance_km must be positive");
+  });
+
+  it("returns 400 for zero max_distance_km", async () => {
+    const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
+      method: "PUT",
+      body: JSON.stringify({ max_distance_km: 0 }),
+    });
+    const res = await PUT(req, { params });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 404 when bike not owned by user", async () => {
+    vi.mocked(verifyBikeOwnership).mockResolvedValue(false);
+    const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
+      method: "PUT",
+      body: JSON.stringify({ name: "KMC X12" }),
+    });
+    const res = await PUT(req, { params });
+    expect(res.status).toBe(404);
+  });
+
   it("updates a component and returns 200", async () => {
-    mockAuth(mockUser);
     const updated = { ...mockComponent, name: "KMC X12" };
     vi.mocked(updateComponent).mockResolvedValue({ data: updated, error: null } as any);
 
@@ -94,7 +128,6 @@ describe("PUT /api/bikes/[id]/components/[componentId]", () => {
   });
 
   it("returns 500 on database error", async () => {
-    mockAuth(mockUser);
     vi.mocked(updateComponent).mockResolvedValue({ data: null, error: { message: "DB error" } } as any);
 
     const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
@@ -108,14 +141,20 @@ describe("PUT /api/bikes/[id]/components/[componentId]", () => {
 
 describe("DELETE /api/bikes/[id]/components/[componentId]", () => {
   it("returns 401 when not authenticated", async () => {
-    mockAuth(null);
+    vi.mocked(requireUser).mockResolvedValue(null);
     const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", { method: "DELETE" });
     const res = await DELETE(req, { params });
     expect(res.status).toBe(401);
   });
 
+  it("returns 404 when bike not owned by user", async () => {
+    vi.mocked(verifyBikeOwnership).mockResolvedValue(false);
+    const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", { method: "DELETE" });
+    const res = await DELETE(req, { params });
+    expect(res.status).toBe(404);
+  });
+
   it("deletes a component and returns 204", async () => {
-    mockAuth(mockUser);
     vi.mocked(deleteComponent).mockResolvedValue({ error: null } as any);
 
     const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", { method: "DELETE" });
@@ -125,7 +164,6 @@ describe("DELETE /api/bikes/[id]/components/[componentId]", () => {
   });
 
   it("returns 500 on database error", async () => {
-    mockAuth(mockUser);
     vi.mocked(deleteComponent).mockResolvedValue({ error: { message: "DB error" } } as any);
 
     const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", { method: "DELETE" });
@@ -136,7 +174,7 @@ describe("DELETE /api/bikes/[id]/components/[componentId]", () => {
 
 describe("PATCH /api/bikes/[id]/components/[componentId]", () => {
   it("returns 401 when not authenticated", async () => {
-    mockAuth(null);
+    vi.mocked(requireUser).mockResolvedValue(null);
     const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
       method: "PATCH",
       body: JSON.stringify({ action: "retire" }),
@@ -146,7 +184,6 @@ describe("PATCH /api/bikes/[id]/components/[componentId]", () => {
   });
 
   it("returns 400 for invalid action", async () => {
-    mockAuth(mockUser);
     const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
       method: "PATCH",
       body: JSON.stringify({ action: "invalid" }),
@@ -155,8 +192,17 @@ describe("PATCH /api/bikes/[id]/components/[componentId]", () => {
     expect(res.status).toBe(400);
   });
 
+  it("returns 404 when bike not owned by user", async () => {
+    vi.mocked(verifyBikeOwnership).mockResolvedValue(false);
+    const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
+      method: "PATCH",
+      body: JSON.stringify({ action: "retire" }),
+    });
+    const res = await PATCH(req, { params });
+    expect(res.status).toBe(404);
+  });
+
   it("retires a component", async () => {
-    mockAuth(mockUser);
     const retired = { ...mockComponent, retired_at: "2026-03-02T00:00:00Z" };
     vi.mocked(retireComponent).mockResolvedValue({ data: retired, error: null } as any);
 

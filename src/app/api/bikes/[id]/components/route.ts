@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { requireUser, verifyBikeOwnership } from "@/lib/auth";
 import { getComponents, createComponent } from "@/lib/components";
-import type { ComponentType } from "@/lib/types";
-
-const VALID_TYPES: ComponentType[] = [
-  "chain", "cassette", "chainring", "tire_front", "tire_rear",
-  "brake_pads", "cables", "bar_tape", "custom",
-];
+import { VALID_COMPONENT_TYPES } from "@/lib/constants";
 
 interface RouteContext {
   params: { id: string };
@@ -14,15 +10,17 @@ interface RouteContext {
 
 export async function GET(_request: Request, { params }: RouteContext) {
   const supabase = await createSupabaseServerClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  const user = await requireUser(supabase);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id: bikeId } = await params;
-  const { data, error } = await getComponents(supabase, bikeId);
+  if (!(await verifyBikeOwnership(supabase, bikeId, user.id))) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
+  const { data, error } = await getComponents(supabase, bikeId);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -32,9 +30,8 @@ export async function GET(_request: Request, { params }: RouteContext) {
 
 export async function POST(request: Request, { params }: RouteContext) {
   const supabase = await createSupabaseServerClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  const user = await requireUser(supabase);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -45,7 +42,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
-  if (!type || !VALID_TYPES.includes(type)) {
+  if (!type || !VALID_COMPONENT_TYPES.includes(type)) {
     return NextResponse.json({ error: "Invalid component type" }, { status: 400 });
   }
 
@@ -54,6 +51,10 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
 
   const { id: bikeId } = await params;
+  if (!(await verifyBikeOwnership(supabase, bikeId, user.id))) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const { data, error } = await createComponent(supabase, {
     bike_id: bikeId,
     name: name.trim(),

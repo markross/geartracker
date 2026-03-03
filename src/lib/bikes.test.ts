@@ -77,32 +77,35 @@ describe("createBike", () => {
 });
 
 describe("updateBike", () => {
-  it("updates a bike by id", async () => {
+  it("updates a bike by id and user_id", async () => {
     const mockSingleUpdate = vi.fn().mockResolvedValue({ data: { ...mockBike, name: "Gravel Bike" }, error: null });
     const mockSelectUpdate = vi.fn().mockReturnValue({ single: mockSingleUpdate });
-    mockEq.mockReturnValue({ select: mockSelectUpdate });
-    mockUpdate.mockReturnValue({
-      eq: mockEq,
-    });
+    const mockEqUserId = vi.fn().mockReturnValue({ select: mockSelectUpdate });
+    const mockEqId = vi.fn().mockReturnValue({ eq: mockEqUserId });
+    mockUpdate.mockReturnValue({ eq: mockEqId });
 
-    const result = await updateBike(mockSupabase, "bike-1", { name: "Gravel Bike" });
+    const result = await updateBike(mockSupabase, "bike-1", "user-1", { name: "Gravel Bike" });
 
     expect(mockFrom).toHaveBeenCalledWith("bikes");
     expect(mockUpdate).toHaveBeenCalledWith({ name: "Gravel Bike" });
-    expect(mockEq).toHaveBeenCalledWith("id", "bike-1");
+    expect(mockEqId).toHaveBeenCalledWith("id", "bike-1");
+    expect(mockEqUserId).toHaveBeenCalledWith("user_id", "user-1");
     expect(result.data).toEqual({ ...mockBike, name: "Gravel Bike" });
     expect(result.error).toBeNull();
   });
 });
 
 describe("deleteBike", () => {
-  it("deletes a bike by id", async () => {
-    mockEq.mockResolvedValue({ data: null, error: null });
+  it("deletes a bike by id and user_id", async () => {
+    const mockEqUserId = vi.fn().mockResolvedValue({ data: null, error: null });
+    const mockEqId = vi.fn().mockReturnValue({ eq: mockEqUserId });
+    mockDelete.mockReturnValue({ eq: mockEqId });
 
-    const result = await deleteBike(mockSupabase, "bike-1");
+    const result = await deleteBike(mockSupabase, "bike-1", "user-1");
 
     expect(mockFrom).toHaveBeenCalledWith("bikes");
-    expect(mockEq).toHaveBeenCalledWith("id", "bike-1");
+    expect(mockEqId).toHaveBeenCalledWith("id", "bike-1");
+    expect(mockEqUserId).toHaveBeenCalledWith("user_id", "user-1");
     expect(result.error).toBeNull();
   });
 });

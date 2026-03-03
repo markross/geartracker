@@ -28,7 +28,7 @@ export async function getValidStravaToken(
   );
 
   // Update tokens in DB
-  await supabase
+  const { error: updateError } = await supabase
     .from("users")
     .update({
       strava_access_token: refreshed.access_token,
@@ -38,6 +38,10 @@ export async function getValidStravaToken(
       ).toISOString(),
     })
     .eq("id", user.id);
+
+  if (updateError) {
+    throw new Error(`Failed to persist refreshed token: ${updateError.message}`);
+  }
 
   return refreshed.access_token;
 }

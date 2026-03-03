@@ -1,14 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { User, Bike } from "./types";
-import { fetchAllStravaActivities, type StravaActivity } from "./strava/activities";
+import type { User, RideInsert } from "./types";
+import { fetchAllStravaActivities } from "./strava/activities";
 import { getValidStravaToken } from "./strava/token";
 import { getBikes } from "./bikes";
-import { getRides, createRide } from "./rides";
+import { getRides } from "./rides";
 
 export interface SyncResult {
   fetched: number;
   imported: number;
   skipped: number;
+  errors: number;
 }
 
 export async function syncStravaActivities(
@@ -24,7 +25,10 @@ export async function syncStravaActivities(
   const rides = activities.filter((a) => a.type === "Ride" || a.type === "VirtualRide");
 
   // Get existing rides to dedup by strava_activity_id
-  const { data: existingRides } = await getRides(supabase, user.id);
+  const { data: existingRides, error: ridesError } = await getRides(supabase, user.id);
+  if (ridesError) {
+    throw new Error(`Failed to fetch existing rides: ${ridesError.message}`);
+  }
   const existingStravaIds = new Set(
     (existingRides ?? [])
       .map((r) => r.strava_activity_id)
@@ -32,7 +36,10 @@ export async function syncStravaActivities(
   );
 
   // Get bikes to match by strava_gear_id
-  const { data: bikes } = await getBikes(supabase, user.id);
+  const { data: bikes, error: bikesError } = await getBikes(supabase, user.id);
+  if (bikesError) {
+    throw new Error(`Failed to fetch bikes: ${bikesError.message}`);
+  }
   const gearToBike = new Map<string, string>();
   for (const bike of bikes ?? []) {
     if (bike.strava_gear_id) {
@@ -40,7 +47,8 @@ export async function syncStravaActivities(
     }
   }
 
-  let imported = 0;
+  // Build batch of new rides
+  const newRides: RideInsert[] = [];
   let skipped = 0;
 
   for (const activity of rides) {
@@ -51,7 +59,7 @@ export async function syncStravaActivities(
 
     const bikeId = activity.gear_id ? gearToBike.get(activity.gear_id) ?? null : null;
 
-    await createRide(supabase, {
+    newRides.push({
       user_id: user.id,
       strava_activity_id: activity.id,
       name: activity.name,
@@ -60,9 +68,24 @@ export async function syncStravaActivities(
       started_at: activity.start_date,
       bike_id: bikeId,
     });
-
-    imported++;
   }
 
-  return { fetched: rides.length, imported, skipped };
+  // Batch insert
+  let imported = 0;
+  let errors = 0;
+
+  if (newRides.length > 0) {
+    const { data, error } = await supabase
+      .from("rides")
+      .insert(newRides)
+      .select();
+
+    if (error) {
+      throw new Error(`Failed to insert rides: ${error.message}`);
+    }
+    imported = data?.length ?? 0;
+    errors = newRides.length - imported;
+  }
+
+  return { fetched: rides.length, imported, skipped, errors };
 }

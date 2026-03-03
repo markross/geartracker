@@ -18,7 +18,13 @@ export async function PUT(request: Request, { params }: RouteContext) {
   const body = await request.json();
   const updates: BikeUpdate = {};
 
-  if (typeof body.name === "string") updates.name = body.name.trim();
+  if (typeof body.name === "string") {
+    const trimmed = body.name.trim();
+    if (!trimmed) {
+      return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
+    }
+    updates.name = trimmed;
+  }
   if (typeof body.is_active === "boolean") updates.is_active = body.is_active;
 
   if (Object.keys(updates).length === 0) {
@@ -26,7 +32,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
   }
 
   const { id } = await params;
-  const { data, error } = await updateBike(supabase, id, updates);
+  const { data, error } = await updateBike(supabase, id, user.id, updates);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -44,7 +50,7 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
   }
 
   const { id } = await params;
-  const { error } = await deleteBike(supabase, id);
+  const { error } = await deleteBike(supabase, id, user.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

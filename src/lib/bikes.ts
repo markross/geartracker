@@ -12,11 +12,12 @@ export async function createBike(supabase: SupabaseClient, bike: BikeInsert) {
 export async function updateBike(
   supabase: SupabaseClient,
   id: string,
+  userId: string,
   updates: BikeUpdate
 ) {
-  return supabase.from("bikes").update(updates).eq("id", id).select().single();
+  return supabase.from("bikes").update(updates).eq("id", id).eq("user_id", userId).select().single();
 }
 
-export async function deleteBike(supabase: SupabaseClient, id: string) {
-  return supabase.from("bikes").delete().eq("id", id);
+export async function deleteBike(supabase: SupabaseClient, id: string, userId: string) {
+  return supabase.from("bikes").delete().eq("id", id).eq("user_id", userId);
 }

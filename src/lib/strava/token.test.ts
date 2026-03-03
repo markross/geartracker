@@ -77,6 +77,48 @@ describe("getValidStravaToken", () => {
     );
   });
 
+  it("throws if DB update fails after refresh", async () => {
+    const pastDate = new Date(Date.now() - 3600 * 1000).toISOString();
+    const user = { ...mockUser, strava_token_expires_at: pastDate };
+
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          access_token: "new-token",
+          refresh_token: "new-refresh",
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+        }),
+        { status: 200 }
+      )
+    );
+
+    mockEq.mockResolvedValue({ error: { message: "DB write failed" } });
+
+    await expect(
+      getValidStravaToken(user, mockSupabase, "client-123", "secret-abc")
+    ).rejects.toThrow("Failed to persist refreshed token: DB write failed");
+  });
+
+  it("treats null strava_token_expires_at as expired", async () => {
+    const user = { ...mockUser, strava_token_expires_at: null };
+
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          access_token: "new-token",
+          refresh_token: "new-refresh",
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+        }),
+        { status: 200 }
+      )
+    );
+
+    mockEq.mockResolvedValue({ error: null });
+
+    const result = await getValidStravaToken(user, mockSupabase, "client-123", "secret-abc");
+    expect(result).toBe("new-token");
+  });
+
   it("throws if no refresh token available", async () => {
     const pastDate = new Date(Date.now() - 3600 * 1000).toISOString();
     const user = {

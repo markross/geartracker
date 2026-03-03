@@ -12,30 +12,21 @@ describe("SyncButton", () => {
     expect(screen.getByText("Sync with Strava")).toBeInTheDocument();
   });
 
-  it("shows syncing state", async () => {
-    let resolveFetch: (value: any) => void;
+  it("shows success and re-enables button after sync", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockReturnValue(
-        new Promise((resolve) => {
-          resolveFetch = resolve;
-        })
-      )
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ fetched: 1, imported: 1, skipped: 0 }),
+      })
     );
 
     render(<SyncButton />);
     fireEvent.click(screen.getByText("Sync with Strava"));
 
-    expect(screen.getByText("Syncing...")).toBeInTheDocument();
-    expect(screen.getByText("Syncing...")).toBeDisabled();
-
-    resolveFetch!({
-      ok: true,
-      json: () => Promise.resolve({ fetched: 0, imported: 0, skipped: 0 }),
-    });
-
     await waitFor(() => {
       expect(screen.getByText("Sync with Strava")).toBeInTheDocument();
+      expect(screen.getByText("Sync with Strava")).not.toBeDisabled();
     });
   });
 

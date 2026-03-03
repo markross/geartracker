@@ -5,7 +5,10 @@ export async function GET(request: NextRequest) {
   const tokenHash = request.nextUrl.searchParams.get("token_hash");
   const type = request.nextUrl.searchParams.get("type");
 
-  if (!tokenHash || !type) {
+  const ALLOWED_TYPES = ["magiclink", "recovery", "email"] as const;
+  type OtpType = typeof ALLOWED_TYPES[number];
+
+  if (!tokenHash || !type || !ALLOWED_TYPES.includes(type as OtpType)) {
     return NextResponse.redirect(new URL("/login?error=invalid_link", request.url));
   }
 
@@ -30,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   const { error } = await supabase.auth.verifyOtp({
     token_hash: tokenHash,
-    type: type as "magiclink",
+    type: type as OtpType,
   });
 
   if (error) {
