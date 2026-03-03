@@ -20,7 +20,7 @@ const mockEq = vi.fn();
 const mockSingle = vi.fn();
 const mockOrder = vi.fn();
 
-const mockFrom = vi.fn(() => ({
+const mockFrom = vi.fn((): Record<string, any> => ({
   select: mockSelect,
   insert: mockInsert,
 }));
