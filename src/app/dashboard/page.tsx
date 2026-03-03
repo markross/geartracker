@@ -6,6 +6,7 @@ import { getBikeWearStats } from "@/lib/wear";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import DashboardView from "./DashboardView";
+import type { DistanceUnit } from "@/lib/types";
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
@@ -17,10 +18,12 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  const [{ data: bikes }, { data: unassignedRides }] = await Promise.all([
+  const [{ data: bikes }, { data: unassignedRides }, { data: profile }] = await Promise.all([
     getBikes(supabase, user.id),
     getUnassignedRides(supabase, user.id),
+    supabase.from("users").select("distance_unit").eq("id", user.id).single(),
   ]);
+  const distanceUnit: DistanceUnit = profile?.distance_unit ?? "km";
   const activeBikes = (bikes ?? []).filter((b) => b.is_active);
 
   const wearData = await Promise.all(
@@ -52,7 +55,7 @@ export default async function DashboardPage() {
           You have {unassignedCount} ride{unassignedCount !== 1 ? "s" : ""} not assigned to a bike &rarr;
         </Link>
       )}
-      <DashboardView initialData={wearData} />
+      <DashboardView initialData={wearData} distanceUnit={distanceUnit} />
     </div>
   );
 }

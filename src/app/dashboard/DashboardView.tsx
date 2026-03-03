@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import type { BikeWearStats } from "@/lib/types";
+import type { BikeWearStats, DistanceUnit } from "@/lib/types";
 import ComponentWearCard from "./ComponentWearCard";
 
 interface DashboardViewProps {
   initialData: BikeWearStats[];
+  distanceUnit: DistanceUnit;
 }
 
-export default function DashboardView({ initialData }: DashboardViewProps) {
+export default function DashboardView({ initialData, distanceUnit }: DashboardViewProps) {
   if (initialData.length === 0) {
     return (
       <div className="text-center text-zinc-500">
@@ -42,7 +43,7 @@ export default function DashboardView({ initialData }: DashboardViewProps) {
               {components
                 .sort((a, b) => b.wear_pct - a.wear_pct)
                 .map((stats) => (
-                  <ComponentWearCard key={stats.component.id} stats={stats} />
+                  <ComponentWearCard key={stats.component.id} stats={stats} distanceUnit={distanceUnit} />
                 ))}
             </div>
           )}

@@ -1,6 +1,7 @@
 "use client";
 
-import type { ComponentWearStats } from "@/lib/types";
+import type { ComponentWearStats, DistanceUnit } from "@/lib/types";
+import { formatDistance } from "@/lib/distance";
 import WearBar from "./WearBar";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -17,9 +18,10 @@ const TYPE_LABELS: Record<string, string> = {
 
 interface ComponentWearCardProps {
   stats: ComponentWearStats;
+  distanceUnit: DistanceUnit;
 }
 
-export default function ComponentWearCard({ stats }: ComponentWearCardProps) {
+export default function ComponentWearCard({ stats, distanceUnit }: ComponentWearCardProps) {
   const { component, distance_km, wear_pct, status } = stats;
 
   return (
@@ -41,7 +43,7 @@ export default function ComponentWearCard({ stats }: ComponentWearCardProps) {
           </p>
         </div>
         <p className="text-sm text-zinc-600">
-          {Math.round(distance_km).toLocaleString()} / {component.max_distance_km.toLocaleString()} km
+          {formatDistance(distance_km, distanceUnit)} / {formatDistance(component.max_distance_km, distanceUnit)}
         </p>
       </div>
       <WearBar wear_pct={wear_pct} status={status} />
