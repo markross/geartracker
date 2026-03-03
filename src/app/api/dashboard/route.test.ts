@@ -35,7 +35,7 @@ const mockComponent = {
   id: "comp-1",
   bike_id: "bike-1",
   name: "Chain",
-  type: "chain",
+  type: "chain" as const,
   max_distance_km: 5000,
   installed_at: "2026-01-01T00:00:00Z",
   retired_at: null,
@@ -62,8 +62,7 @@ function mockAuth(user: typeof mockUser | null) {
 describe("GET /api/dashboard", () => {
   it("returns 401 when not authenticated", async () => {
     mockAuth(null);
-    const req = new Request("http://localhost/api/dashboard");
-    const res = await GET(req);
+    const res = await GET();
     expect(res.status).toBe(401);
   });
 
@@ -83,8 +82,7 @@ describe("GET /api/dashboard", () => {
       ],
     });
 
-    const req = new Request("http://localhost/api/dashboard");
-    const res = await GET(req);
+    const res = await GET();
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -97,8 +95,7 @@ describe("GET /api/dashboard", () => {
     mockAuth(mockUser);
     vi.mocked(getBikes).mockResolvedValue({ data: [], error: null } as any);
 
-    const req = new Request("http://localhost/api/dashboard");
-    const res = await GET(req);
+    const res = await GET();
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -112,8 +109,7 @@ describe("GET /api/dashboard", () => {
       error: { message: "DB error" },
     } as any);
 
-    const req = new Request("http://localhost/api/dashboard");
-    const res = await GET(req);
+    const res = await GET();
     expect(res.status).toBe(500);
   });
 });
