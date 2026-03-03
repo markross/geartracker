@@ -18,6 +18,12 @@ export default async function Home() {
         <p className="mt-4 text-lg text-zinc-600">
           Track wear on your bike components
         </p>
+        <a
+          href="/api/auth/strava"
+          className="mt-8 inline-block rounded-md bg-orange-500 px-6 py-3 text-lg font-semibold text-white hover:bg-orange-600"
+        >
+          Connect with Strava
+        </a>
       </main>
     </div>
   );
