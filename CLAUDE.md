@@ -28,7 +28,7 @@ Bike component wear tracking app synced with Strava.
 - Use `vitest` for unit/integration, `playwright` for e2e
 
 ## Current Stage
-**Stage 8: Strava Webhook Sync** — complete
+**Stage 9: Settings & Polish** — complete
 
 ## Key Decisions
 - Strava OAuth for auth (no separate email/password)
