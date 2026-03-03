@@ -67,13 +67,14 @@ describe("POST /api/sync", () => {
       imported: 3,
       skipped: 2,
       errors: 0,
+      bikes_created: 0,
     });
 
     const res = await POST();
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body).toEqual({ fetched: 5, imported: 3, skipped: 2, errors: 0 });
+    expect(body).toEqual({ fetched: 5, imported: 3, skipped: 2, errors: 0, bikes_created: 0 });
   });
 
   it("returns 500 on sync error", async () => {
