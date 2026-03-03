@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getRides, createRide, getRidesForBike } from "./rides";
+import { getRides, createRide, getRidesForBike, getUnassignedRides, updateRideBike } from "./rides";
 import type { Ride } from "./types";
 
 const mockRide: Ride = {
@@ -92,5 +92,48 @@ describe("createRide", () => {
       started_at: "2026-01-15T08:00:00Z",
     });
     expect(result).toEqual({ data: mockRide, error: null });
+  });
+});
+
+describe("getUnassignedRides", () => {
+  it("returns rides with null bike_id", async () => {
+    const unassigned = { ...mockRide, bike_id: null };
+    const mockIs = vi.fn().mockReturnValue({
+      order: vi.fn().mockResolvedValue({ data: [unassigned], error: null }),
+    });
+    mockSelect.mockReturnValue({
+      eq: vi.fn().mockReturnValue({ is: mockIs }),
+    });
+
+    const result = await getUnassignedRides(mockSupabase, "user-1");
+
+    expect(mockFrom).toHaveBeenCalledWith("rides");
+    expect(mockIs).toHaveBeenCalledWith("bike_id", null);
+    expect(result).toEqual({ data: [unassigned], error: null });
+  });
+});
+
+describe("updateRideBike", () => {
+  it("updates bike_id on a ride", async () => {
+    const mockUpdate = vi.fn();
+    const mockUpdateEq1 = vi.fn();
+    const mockUpdateEq2 = vi.fn();
+    const mockUpdateSelect = vi.fn();
+    const mockUpdateSingle = vi.fn().mockResolvedValue({
+      data: { ...mockRide, bike_id: "bike-2" },
+      error: null,
+    });
+
+    mockFrom.mockReturnValue({ update: mockUpdate });
+    mockUpdate.mockReturnValue({ eq: mockUpdateEq1 });
+    mockUpdateEq1.mockReturnValue({ eq: mockUpdateEq2 });
+    mockUpdateEq2.mockReturnValue({ select: mockUpdateSelect });
+    mockUpdateSelect.mockReturnValue({ single: mockUpdateSingle });
+
+    const result = await updateRideBike(mockSupabase, "ride-1", "user-1", "bike-2");
+
+    expect(mockFrom).toHaveBeenCalledWith("rides");
+    expect(mockUpdate).toHaveBeenCalledWith({ bike_id: "bike-2" });
+    expect(result).toEqual({ data: { ...mockRide, bike_id: "bike-2" }, error: null });
   });
 });
