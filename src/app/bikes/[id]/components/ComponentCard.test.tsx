@@ -35,21 +35,21 @@ describe("ComponentCard", () => {
 
   it("calls onEdit when Edit clicked", () => {
     const onEdit = vi.fn();
-    render(<ComponentCard component={component} onEdit={onEdit} onDelete={vi.fn()} onRetire={vi.fn()} />);
+    render(<ComponentCard component={component} distanceUnit="km" onEdit={onEdit} onDelete={vi.fn()} onRetire={vi.fn()} />);
     fireEvent.click(screen.getByText("Edit"));
     expect(onEdit).toHaveBeenCalledWith(component);
   });
 
   it("calls onDelete when Delete clicked", () => {
     const onDelete = vi.fn();
-    render(<ComponentCard component={component} onEdit={vi.fn()} onDelete={onDelete} onRetire={vi.fn()} />);
+    render(<ComponentCard component={component} distanceUnit="km" onEdit={vi.fn()} onDelete={onDelete} onRetire={vi.fn()} />);
     fireEvent.click(screen.getByText("Delete"));
     expect(onDelete).toHaveBeenCalledWith("comp-1");
   });
 
   it("calls onRetire when Retire clicked", () => {
     const onRetire = vi.fn();
-    render(<ComponentCard component={component} onEdit={vi.fn()} onDelete={vi.fn()} onRetire={onRetire} />);
+    render(<ComponentCard component={component} distanceUnit="km" onEdit={vi.fn()} onDelete={vi.fn()} onRetire={onRetire} />);
     fireEvent.click(screen.getByText("Retire"));
     expect(onRetire).toHaveBeenCalledWith("comp-1");
   });
