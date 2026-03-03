@@ -20,7 +20,11 @@ export default function SyncButton() {
         return;
       }
       const data = await res.json();
-      setResult(`Synced: ${data.imported} new rides (${data.skipped} already imported)`);
+      const parts = [`${data.imported} new rides`, `${data.skipped} already imported`];
+      if (data.bikes_created > 0) {
+        parts.push(`${data.bikes_created} bike${data.bikes_created !== 1 ? "s" : ""} created`);
+      }
+      setResult(`Synced: ${parts.join(", ")}`);
     } catch {
       setError("Network error during sync");
     } finally {

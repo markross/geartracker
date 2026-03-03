@@ -35,7 +35,7 @@ describe("SyncButton", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({ fetched: 5, imported: 3, skipped: 2 }),
+        json: () => Promise.resolve({ fetched: 5, imported: 3, skipped: 2, bikes_created: 0 }),
       })
     );
 
@@ -43,7 +43,7 @@ describe("SyncButton", () => {
     fireEvent.click(screen.getByText("Sync with Strava"));
 
     await waitFor(() => {
-      expect(screen.getByText("Synced: 3 new rides (2 already imported)")).toBeInTheDocument();
+      expect(screen.getByText("Synced: 3 new rides, 2 already imported")).toBeInTheDocument();
     });
   });
 
