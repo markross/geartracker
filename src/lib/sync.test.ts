@@ -10,8 +10,14 @@ vi.mock("./strava/activities", () => ({
   fetchAllStravaActivities: vi.fn(),
 }));
 
+vi.mock("./strava/gear", () => ({
+  fetchStravaGear: vi.fn(),
+  stravaGearDisplayName: vi.fn(),
+}));
+
 vi.mock("./bikes", () => ({
   getBikes: vi.fn(),
+  createBike: vi.fn(),
 }));
 
 vi.mock("./rides", () => ({
@@ -20,7 +26,8 @@ vi.mock("./rides", () => ({
 
 import { getValidStravaToken } from "./strava/token";
 import { fetchAllStravaActivities } from "./strava/activities";
-import { getBikes } from "./bikes";
+import { fetchStravaGear, stravaGearDisplayName } from "./strava/gear";
+import { getBikes, createBike } from "./bikes";
 import { getRides } from "./rides";
 
 const mockUser: User = {
@@ -72,7 +79,7 @@ describe("syncStravaActivities", () => {
 
     const result = await syncStravaActivities(mockSupabase, mockUser, "cid", "csec");
 
-    expect(result).toEqual({ fetched: 1, imported: 1, skipped: 0, errors: 0 });
+    expect(result).toEqual({ fetched: 1, imported: 1, skipped: 0, errors: 0, bikes_created: 0 });
     expect(mockSupabase.from).toHaveBeenCalledWith("rides");
     expect(mockSupabase._mockInsert).toHaveBeenCalledWith([
       expect.objectContaining({
@@ -98,7 +105,7 @@ describe("syncStravaActivities", () => {
 
     const result = await syncStravaActivities(mockSupabase, mockUser, "cid", "csec");
 
-    expect(result).toEqual({ fetched: 1, imported: 0, skipped: 1, errors: 0 });
+    expect(result).toEqual({ fetched: 1, imported: 0, skipped: 1, errors: 0, bikes_created: 0 });
     // Should not call insert when all rides are skipped
     expect(mockSupabase.from).not.toHaveBeenCalledWith("rides");
   });
@@ -141,7 +148,7 @@ describe("syncStravaActivities", () => {
 
     const result = await syncStravaActivities(mockSupabase, mockUser, "cid", "csec");
 
-    expect(result).toEqual({ fetched: 1, imported: 1, skipped: 0, errors: 0 });
+    expect(result).toEqual({ fetched: 1, imported: 1, skipped: 0, errors: 0, bikes_created: 0 });
   });
 
   it("includes VirtualRide activities", async () => {
@@ -158,7 +165,7 @@ describe("syncStravaActivities", () => {
 
     const result = await syncStravaActivities(mockSupabase, mockUser, "cid", "csec");
 
-    expect(result).toEqual({ fetched: 1, imported: 1, skipped: 0, errors: 0 });
+    expect(result).toEqual({ fetched: 1, imported: 1, skipped: 0, errors: 0, bikes_created: 0 });
   });
 
   it("throws when batch insert fails", async () => {
@@ -205,5 +212,84 @@ describe("syncStravaActivities", () => {
     await expect(
       syncStravaActivities(mockSupabase, mockUser, "cid", "csec")
     ).rejects.toThrow("Failed to fetch bikes");
+  });
+
+  it("auto-creates bikes for unknown gear_ids", async () => {
+    const mockSupabase = createMockSupabase({
+      data: [{ id: "ride-1" }],
+      error: null,
+    });
+
+    vi.mocked(fetchAllStravaActivities).mockResolvedValue([
+      { id: 600, name: "Ride", distance: 20000, moving_time: 3600, start_date: "2026-03-01T08:00:00Z", gear_id: "b99999", type: "Ride" },
+    ]);
+    vi.mocked(getRides).mockResolvedValue({ data: [], error: null } as any);
+    vi.mocked(getBikes).mockResolvedValue({ data: [], error: null } as any);
+    vi.mocked(fetchStravaGear).mockResolvedValue({
+      id: "b99999", name: "My Bike", brand_name: "Trek", model_name: "Domane", distance: 50000,
+    });
+    vi.mocked(stravaGearDisplayName).mockReturnValue("Trek Domane");
+    vi.mocked(createBike).mockResolvedValue({
+      data: { id: "bike-new", user_id: "user-1", name: "Trek Domane", strava_gear_id: "b99999", is_active: true, created_at: "2026-01-01" },
+      error: null,
+    } as any);
+
+    const result = await syncStravaActivities(mockSupabase, mockUser, "cid", "csec");
+
+    expect(result.bikes_created).toBe(1);
+    expect(createBike).toHaveBeenCalledWith(mockSupabase, {
+      user_id: "user-1",
+      name: "Trek Domane",
+      strava_gear_id: "b99999",
+    });
+    // Ride should be linked to the newly created bike
+    expect(mockSupabase._mockInsert).toHaveBeenCalledWith([
+      expect.objectContaining({ bike_id: "bike-new" }),
+    ]);
+  });
+
+  it("does not duplicate bikes for already-known gear_ids", async () => {
+    const mockSupabase = createMockSupabase({
+      data: [{ id: "ride-1" }],
+      error: null,
+    });
+
+    vi.mocked(fetchAllStravaActivities).mockResolvedValue([
+      { id: 700, name: "Ride", distance: 20000, moving_time: 3600, start_date: "2026-03-01T08:00:00Z", gear_id: "b12345", type: "Ride" },
+    ]);
+    vi.mocked(getRides).mockResolvedValue({ data: [], error: null } as any);
+    vi.mocked(getBikes).mockResolvedValue({
+      data: [{ id: "bike-1", strava_gear_id: "b12345" }],
+      error: null,
+    } as any);
+
+    const result = await syncStravaActivities(mockSupabase, mockUser, "cid", "csec");
+
+    expect(result.bikes_created).toBe(0);
+    expect(fetchStravaGear).not.toHaveBeenCalled();
+    expect(createBike).not.toHaveBeenCalled();
+  });
+
+  it("continues if gear fetch fails for one gear_id", async () => {
+    const mockSupabase = createMockSupabase({
+      data: [{ id: "ride-1" }],
+      error: null,
+    });
+
+    vi.mocked(fetchAllStravaActivities).mockResolvedValue([
+      { id: 800, name: "Ride", distance: 20000, moving_time: 3600, start_date: "2026-03-01T08:00:00Z", gear_id: "b_bad", type: "Ride" },
+    ]);
+    vi.mocked(getRides).mockResolvedValue({ data: [], error: null } as any);
+    vi.mocked(getBikes).mockResolvedValue({ data: [], error: null } as any);
+    vi.mocked(fetchStravaGear).mockRejectedValue(new Error("Strava API error: 404"));
+
+    const result = await syncStravaActivities(mockSupabase, mockUser, "cid", "csec");
+
+    expect(result.bikes_created).toBe(0);
+    expect(result.imported).toBe(1);
+    // Ride should have null bike_id since gear fetch failed
+    expect(mockSupabase._mockInsert).toHaveBeenCalledWith([
+      expect.objectContaining({ bike_id: null }),
+    ]);
   });
 });

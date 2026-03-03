@@ -2,7 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { User, RideInsert } from "./types";
 import { fetchAllStravaActivities } from "./strava/activities";
 import { getValidStravaToken } from "./strava/token";
-import { getBikes } from "./bikes";
+import { fetchStravaGear, stravaGearDisplayName } from "./strava/gear";
+import { getBikes, createBike } from "./bikes";
 import { getRides } from "./rides";
 
 export interface SyncResult {
@@ -10,6 +11,7 @@ export interface SyncResult {
   imported: number;
   skipped: number;
   errors: number;
+  bikes_created: number;
 }
 
 export async function syncStravaActivities(
@@ -44,6 +46,33 @@ export async function syncStravaActivities(
   for (const bike of bikes ?? []) {
     if (bike.strava_gear_id) {
       gearToBike.set(bike.strava_gear_id, bike.id);
+    }
+  }
+
+  // Auto-create bikes for unknown gear_ids
+  const unknownGearIds = new Set<string>();
+  for (const activity of rides) {
+    if (activity.gear_id && !gearToBike.has(activity.gear_id)) {
+      unknownGearIds.add(activity.gear_id);
+    }
+  }
+
+  let bikesCreated = 0;
+  for (const gearId of unknownGearIds) {
+    try {
+      const gear = await fetchStravaGear(token, gearId);
+      const name = stravaGearDisplayName(gear);
+      const { data: newBike, error } = await createBike(supabase, {
+        user_id: user.id,
+        name,
+        strava_gear_id: gearId,
+      });
+      if (newBike && !error) {
+        gearToBike.set(gearId, newBike.id);
+        bikesCreated++;
+      }
+    } catch {
+      // Skip bike creation on error, rides will get bike_id: null
     }
   }
 
@@ -87,5 +116,5 @@ export async function syncStravaActivities(
     errors = newRides.length - imported;
   }
 
-  return { fetched: rides.length, imported, skipped, errors };
+  return { fetched: rides.length, imported, skipped, errors, bikes_created: bikesCreated };
 }
