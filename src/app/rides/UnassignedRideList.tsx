@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import type { Ride, Bike } from "@/lib/types";
+import type { Ride, Bike, DistanceUnit } from "@/lib/types";
 import RideAssignCard from "./RideAssignCard";
 
 interface UnassignedRideListProps {
   initialRides: Ride[];
   bikes: Bike[];
+  distanceUnit: DistanceUnit;
 }
 
-export default function UnassignedRideList({ initialRides, bikes }: UnassignedRideListProps) {
+export default function UnassignedRideList({ initialRides, bikes, distanceUnit }: UnassignedRideListProps) {
   const [rides, setRides] = useState<Ride[]>(initialRides);
 
   function handleAssigned(rideId: string) {
@@ -32,6 +33,7 @@ export default function UnassignedRideList({ initialRides, bikes }: UnassignedRi
           key={ride.id}
           ride={ride}
           bikes={bikes}
+          distanceUnit={distanceUnit}
           onAssigned={handleAssigned}
         />
       ))}

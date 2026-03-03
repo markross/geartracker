@@ -1,11 +1,13 @@
 "use client";
 
-import type { Component, ComponentWearStats } from "@/lib/types";
+import type { Component, ComponentWearStats, DistanceUnit } from "@/lib/types";
+import { formatDistance } from "@/lib/distance";
 import WearBar from "@/app/dashboard/WearBar";
 
 interface ComponentCardProps {
   component: Component;
   wear?: ComponentWearStats;
+  distanceUnit: DistanceUnit;
   onEdit: (component: Component) => void;
   onDelete: (id: string) => void;
   onRetire: (id: string) => void;
@@ -23,7 +25,7 @@ const TYPE_LABELS: Record<string, string> = {
   custom: "Custom",
 };
 
-export default function ComponentCard({ component, wear, onEdit, onDelete, onRetire }: ComponentCardProps) {
+export default function ComponentCard({ component, wear, distanceUnit, onEdit, onDelete, onRetire }: ComponentCardProps) {
   const isRetired = !!component.retired_at;
 
   return (
@@ -35,7 +37,7 @@ export default function ComponentCard({ component, wear, onEdit, onDelete, onRet
         <div>
           <h4 className="font-semibold">{component.name}</h4>
           <p className="text-sm text-zinc-500">
-            {TYPE_LABELS[component.type] || component.type} · {component.max_distance_km.toLocaleString()} km limit
+            {TYPE_LABELS[component.type] || component.type} · {formatDistance(wear?.distance_km ?? 0, distanceUnit)} / {formatDistance(component.max_distance_km, distanceUnit)} limit
           </p>
           {isRetired && (
             <span className="text-sm text-zinc-400">Retired</span>

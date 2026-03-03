@@ -4,6 +4,7 @@ import { getBikes } from "@/lib/bikes";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import UnassignedRideList from "./UnassignedRideList";
+import type { DistanceUnit } from "@/lib/types";
 
 export default async function RidesPage() {
   const supabase = await createSupabaseServerClient();
@@ -15,10 +16,12 @@ export default async function RidesPage() {
     redirect("/");
   }
 
-  const [{ data: rides }, { data: bikes }] = await Promise.all([
+  const [{ data: rides }, { data: bikes }, { data: profile }] = await Promise.all([
     getUnassignedRides(supabase, user.id),
     getBikes(supabase, user.id),
+    supabase.from("users").select("distance_unit").eq("id", user.id).single(),
   ]);
+  const distanceUnit: DistanceUnit = profile?.distance_unit ?? "km";
 
   return (
     <div className="mx-auto max-w-2xl p-6">
@@ -31,6 +34,7 @@ export default async function RidesPage() {
       <UnassignedRideList
         initialRides={rides ?? []}
         bikes={(bikes ?? []).filter((b) => b.is_active)}
+        distanceUnit={distanceUnit}
       />
     </div>
   );

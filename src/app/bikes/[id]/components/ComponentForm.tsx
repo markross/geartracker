@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { Component, ComponentType } from "@/lib/types";
+import type { Component, ComponentType, DistanceUnit } from "@/lib/types";
+import { kmToMiles, milesToKm, distanceLabel } from "@/lib/distance";
 
 const COMPONENT_TYPES: { value: ComponentType; label: string }[] = [
   { value: "chain", label: "Chain" },
@@ -17,14 +18,18 @@ const COMPONENT_TYPES: { value: ComponentType; label: string }[] = [
 
 interface ComponentFormProps {
   component?: Component | null;
+  distanceUnit?: DistanceUnit;
   onSubmit: (data: { name: string; type: ComponentType; max_distance_km: number }) => void;
   onCancel: () => void;
 }
 
-export default function ComponentForm({ component, onSubmit, onCancel }: ComponentFormProps) {
+export default function ComponentForm({ component, distanceUnit = "km", onSubmit, onCancel }: ComponentFormProps) {
   const [name, setName] = useState(component?.name ?? "");
   const [type, setType] = useState<ComponentType>(component?.type ?? "chain");
-  const [maxDistance, setMaxDistance] = useState(component?.max_distance_km?.toString() ?? "");
+  const initialDisplay = component?.max_distance_km
+    ? distanceUnit === "mi" ? Math.round(kmToMiles(component.max_distance_km)).toString() : component.max_distance_km.toString()
+    : "";
+  const [maxDistance, setMaxDistance] = useState(initialDisplay);
   const [error, setError] = useState("");
 
   function handleSubmit(e: React.FormEvent) {
@@ -40,7 +45,8 @@ export default function ComponentForm({ component, onSubmit, onCancel }: Compone
       return;
     }
     setError("");
-    onSubmit({ name: trimmed, type, max_distance_km: dist });
+    const distKm = distanceUnit === "mi" ? milesToKm(dist) : dist;
+    onSubmit({ name: trimmed, type, max_distance_km: Math.round(distKm) });
   }
 
   return (
@@ -70,7 +76,7 @@ export default function ComponentForm({ component, onSubmit, onCancel }: Compone
         </select>
       </div>
       <div>
-        <label htmlFor="max-distance" className="block text-sm font-medium">Max Distance (km)</label>
+        <label htmlFor="max-distance" className="block text-sm font-medium">Max Distance ({distanceLabel(distanceUnit)})</label>
         <input
           id="max-distance"
           type="number"

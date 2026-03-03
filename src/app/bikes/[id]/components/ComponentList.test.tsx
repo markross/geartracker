@@ -20,18 +20,18 @@ beforeEach(() => {
 
 describe("ComponentList", () => {
   it("renders empty state", () => {
-    render(<ComponentList bikeId="bike-1" initialComponents={[]} />);
+    render(<ComponentList bikeId="bike-1" initialComponents={[]} distanceUnit="km" />);
     expect(screen.getByText(/no components yet/i)).toBeInTheDocument();
     expect(screen.getByText("Add Component")).toBeInTheDocument();
   });
 
   it("renders components", () => {
-    render(<ComponentList bikeId="bike-1" initialComponents={[mockComponent]} />);
+    render(<ComponentList bikeId="bike-1" initialComponents={[mockComponent]} distanceUnit="km" />);
     expect(screen.getByText("KMC X11")).toBeInTheDocument();
   });
 
   it("shows form when Add Component clicked", () => {
-    render(<ComponentList bikeId="bike-1" initialComponents={[]} />);
+    render(<ComponentList bikeId="bike-1" initialComponents={[]} distanceUnit="km" />);
     fireEvent.click(screen.getByText("Add Component"));
     expect(screen.getByLabelText("Name")).toBeInTheDocument();
   });
@@ -46,7 +46,7 @@ describe("ComponentList", () => {
       })
     );
 
-    render(<ComponentList bikeId="bike-1" initialComponents={[]} />);
+    render(<ComponentList bikeId="bike-1" initialComponents={[]} distanceUnit="km" />);
     fireEvent.click(screen.getByText("Add Component"));
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Shimano 105" } });
     fireEvent.change(screen.getByLabelText("Max Distance (km)"), { target: { value: "8000" } });
@@ -63,7 +63,7 @@ describe("ComponentList", () => {
       vi.fn().mockResolvedValue({ ok: true })
     );
 
-    render(<ComponentList bikeId="bike-1" initialComponents={[mockComponent]} />);
+    render(<ComponentList bikeId="bike-1" initialComponents={[mockComponent]} distanceUnit="km" />);
     fireEvent.click(screen.getByText("Delete"));
 
     await waitFor(() => {
@@ -81,7 +81,7 @@ describe("ComponentList", () => {
       })
     );
 
-    render(<ComponentList bikeId="bike-1" initialComponents={[mockComponent]} />);
+    render(<ComponentList bikeId="bike-1" initialComponents={[mockComponent]} distanceUnit="km" />);
     fireEvent.click(screen.getByText("Retire"));
 
     await waitFor(() => {

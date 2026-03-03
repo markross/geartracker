@@ -55,6 +55,11 @@ describe("ComponentsPage", () => {
   });
 
   it("renders ComponentList when authenticated", async () => {
+    const fromChain: Record<string, any> = {};
+    fromChain.select = vi.fn().mockReturnValue(fromChain);
+    fromChain.eq = vi.fn().mockReturnValue(fromChain);
+    fromChain.single = vi.fn().mockResolvedValue({ data: { distance_unit: "km" }, error: null });
+
     vi.mocked(createSupabaseServerClient).mockResolvedValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({
@@ -62,6 +67,7 @@ describe("ComponentsPage", () => {
           error: null,
         }),
       },
+      from: vi.fn().mockReturnValue(fromChain),
     } as any);
 
     const mockComp = { id: "comp-1", bike_id: "bike-1", name: "KMC X11", type: "chain", max_distance_km: 5000, installed_at: "2026-01-01", retired_at: null, created_at: "2026-01-01" };

@@ -16,17 +16,17 @@ const component: Component = {
 
 describe("ComponentCard", () => {
   it("renders component name, type, and distance limit", () => {
-    render(<ComponentCard component={component} onEdit={vi.fn()} onDelete={vi.fn()} onRetire={vi.fn()} />);
+    render(<ComponentCard component={component} distanceUnit="km" onEdit={vi.fn()} onDelete={vi.fn()} onRetire={vi.fn()} />);
     expect(screen.getByText("KMC X11")).toBeInTheDocument();
     expect(screen.getByText(/Chain/)).toBeInTheDocument();
-    expect(screen.getByText(/5,000 km limit/)).toBeInTheDocument();
+    expect(screen.getByText(/5,000 km/)).toBeInTheDocument();
   });
 
   it("shows Retired label when retired", () => {
     render(
       <ComponentCard
         component={{ ...component, retired_at: "2026-03-01T00:00:00Z" }}
-        onEdit={vi.fn()} onDelete={vi.fn()} onRetire={vi.fn()}
+        distanceUnit="km" onEdit={vi.fn()} onDelete={vi.fn()} onRetire={vi.fn()}
       />
     );
     expect(screen.getByText("Retired")).toBeInTheDocument();

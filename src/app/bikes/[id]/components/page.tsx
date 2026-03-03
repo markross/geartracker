@@ -4,7 +4,7 @@ import { getComponentWear } from "@/lib/wear";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ComponentList from "./ComponentList";
-import type { ComponentWearStats } from "@/lib/types";
+import type { ComponentWearStats, DistanceUnit } from "@/lib/types";
 
 interface PageProps {
   params: { id: string };
@@ -19,7 +19,11 @@ export default async function ComponentsPage({ params }: PageProps) {
   }
 
   const { id: bikeId } = await params;
-  const { data: components } = await getComponents(supabase, bikeId);
+  const [{ data: components }, { data: profile }] = await Promise.all([
+    getComponents(supabase, bikeId),
+    supabase.from("users").select("distance_unit").eq("id", user.id).single(),
+  ]);
+  const distanceUnit: DistanceUnit = profile?.distance_unit ?? "km";
 
   const wearMap: Record<string, ComponentWearStats> = {};
   for (const comp of components ?? []) {
@@ -41,7 +45,7 @@ export default async function ComponentsPage({ params }: PageProps) {
           </Link>
         </div>
       </div>
-      <ComponentList bikeId={bikeId} initialComponents={components ?? []} initialWear={wearMap} />
+      <ComponentList bikeId={bikeId} initialComponents={components ?? []} initialWear={wearMap} distanceUnit={distanceUnit} />
     </div>
   );
 }

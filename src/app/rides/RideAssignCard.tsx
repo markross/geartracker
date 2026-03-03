@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { Ride, Bike } from "@/lib/types";
+import type { Ride, Bike, DistanceUnit } from "@/lib/types";
+import { formatDistance } from "@/lib/distance";
 
 interface RideAssignCardProps {
   ride: Ride;
   bikes: Bike[];
+  distanceUnit: DistanceUnit;
   onAssigned: (rideId: string, bikeId: string) => void;
 }
 
-export default function RideAssignCard({ ride, bikes, onAssigned }: RideAssignCardProps) {
+export default function RideAssignCard({ ride, bikes, distanceUnit, onAssigned }: RideAssignCardProps) {
   const [selectedBikeId, setSelectedBikeId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,14 +43,13 @@ export default function RideAssignCard({ ride, bikes, onAssigned }: RideAssignCa
   }
 
   const date = new Date(ride.started_at).toLocaleDateString();
-  const distanceKm = Math.round(ride.distance_km * 10) / 10;
 
   return (
     <div className="rounded-lg border border-zinc-200 p-4" data-testid={`ride-card-${ride.id}`}>
       <div className="mb-2">
         <h3 className="font-medium">{ride.name}</h3>
         <p className="text-sm text-zinc-500">
-          {date} &middot; {distanceKm} km
+          {date} &middot; {formatDistance(ride.distance_km, distanceUnit)}
         </p>
       </div>
       <div className="flex items-center gap-2">

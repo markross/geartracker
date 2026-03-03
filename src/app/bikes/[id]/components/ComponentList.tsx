@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Component, ComponentType, ComponentWearStats } from "@/lib/types";
+import type { Component, ComponentType, ComponentWearStats, DistanceUnit } from "@/lib/types";
 import ComponentCard from "./ComponentCard";
 import ComponentForm from "./ComponentForm";
 
@@ -9,9 +9,10 @@ interface ComponentListProps {
   bikeId: string;
   initialComponents: Component[];
   initialWear?: Record<string, ComponentWearStats>;
+  distanceUnit: DistanceUnit;
 }
 
-export default function ComponentList({ bikeId, initialComponents, initialWear = {} }: ComponentListProps) {
+export default function ComponentList({ bikeId, initialComponents, initialWear = {}, distanceUnit }: ComponentListProps) {
   const [components, setComponents] = useState<Component[]>(initialComponents);
   const [showForm, setShowForm] = useState(false);
   const [editingComponent, setEditingComponent] = useState<Component | null>(null);
@@ -84,6 +85,7 @@ export default function ComponentList({ bikeId, initialComponents, initialWear =
       {showForm || editingComponent ? (
         <ComponentForm
           component={editingComponent}
+          distanceUnit={distanceUnit}
           onSubmit={editingComponent ? handleUpdate : handleCreate}
           onCancel={() => {
             setShowForm(false);
@@ -109,6 +111,7 @@ export default function ComponentList({ bikeId, initialComponents, initialWear =
             key={comp.id}
             component={comp}
             wear={initialWear[comp.id]}
+            distanceUnit={distanceUnit}
             onEdit={(c) => setEditingComponent(c)}
             onDelete={handleDelete}
             onRetire={handleRetire}
