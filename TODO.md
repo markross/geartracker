@@ -11,4 +11,4 @@
 - [x] **Stage 7: Wear Tracking & Dashboard** — wear calculation, wear bars, replacement alerts
 - [x] **Stage 8: Strava Webhook Sync** — automatic sync via Strava push subscription
 - [x] **Stage 9: Settings & Polish** — distance units, settings page, app navigation
-- [ ] **Stage 10: Capacitor Mobile Wrapper** — iOS/Android packaging, native OAuth, push notifications
+- [x] **Stage 10: Capacitor Mobile Wrapper** — skipped (web-only for now)
