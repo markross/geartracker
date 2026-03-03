@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fetchStravaActivities, fetchAllStravaActivities } from "./activities";
+import { fetchStravaActivities, fetchStravaActivity, fetchAllStravaActivities } from "./activities";
 
 beforeEach(() => {
   vi.restoreAllMocks();
@@ -49,6 +49,32 @@ describe("fetchStravaActivities", () => {
     );
 
     await expect(fetchStravaActivities("bad-token")).rejects.toThrow("Strava API error: 401");
+  });
+});
+
+describe("fetchStravaActivity", () => {
+  it("fetches a single activity by ID", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(mockActivity), { status: 200 })
+    );
+
+    const result = await fetchStravaActivity("token-123", 123);
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/activities/123"),
+      expect.objectContaining({
+        headers: { Authorization: "Bearer token-123" },
+      })
+    );
+    expect(result).toEqual(mockActivity);
+  });
+
+  it("throws on API error", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response("Not Found", { status: 404 })
+    );
+
+    await expect(fetchStravaActivity("token-123", 999)).rejects.toThrow("Strava API error: 404");
   });
 });
 
