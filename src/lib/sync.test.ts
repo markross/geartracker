@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { syncStravaActivities } from "./sync";
+import { syncStravaActivities, processSingleActivity } from "./sync";
 import type { User } from "./types";
 
 vi.mock("./strava/token", () => ({
@@ -22,13 +22,14 @@ vi.mock("./bikes", () => ({
 
 vi.mock("./rides", () => ({
   getRides: vi.fn(),
+  createRide: vi.fn(),
 }));
 
 import { getValidStravaToken } from "./strava/token";
 import { fetchAllStravaActivities } from "./strava/activities";
 import { fetchStravaGear, stravaGearDisplayName } from "./strava/gear";
 import { getBikes, createBike } from "./bikes";
-import { getRides } from "./rides";
+import { getRides, createRide } from "./rides";
 
 const mockUser: User = {
   id: "user-1",
@@ -291,5 +292,95 @@ describe("syncStravaActivities", () => {
     expect(mockSupabase._mockInsert).toHaveBeenCalledWith([
       expect.objectContaining({ bike_id: null }),
     ]);
+  });
+});
+
+describe("processSingleActivity", () => {
+  const mockActivity = {
+    id: 100,
+    name: "Morning Ride",
+    distance: 42500,
+    moving_time: 5400,
+    start_date: "2026-03-01T08:00:00Z",
+    gear_id: null as string | null,
+    type: "Ride",
+  };
+
+  it("imports a new ride activity", async () => {
+    const mockSupabase = {} as any;
+    vi.mocked(getRides).mockResolvedValue({ data: [], error: null } as any);
+    vi.mocked(getBikes).mockResolvedValue({ data: [], error: null } as any);
+    vi.mocked(createRide).mockResolvedValue({ data: { id: "ride-1" }, error: null } as any);
+
+    const result = await processSingleActivity(mockSupabase, mockUser, mockActivity, "token-123");
+
+    expect(result).toEqual({ action: "imported", bike_created: false });
+    expect(createRide).toHaveBeenCalledWith(mockSupabase, expect.objectContaining({
+      user_id: "user-1",
+      strava_activity_id: 100,
+      distance_km: 42.5,
+    }));
+  });
+
+  it("skips already-imported activities", async () => {
+    const mockSupabase = {} as any;
+    vi.mocked(getRides).mockResolvedValue({
+      data: [{ strava_activity_id: 100 }],
+      error: null,
+    } as any);
+
+    const result = await processSingleActivity(mockSupabase, mockUser, mockActivity, "token-123");
+
+    expect(result).toEqual({ action: "skipped", bike_created: false });
+    expect(createRide).not.toHaveBeenCalled();
+  });
+
+  it("ignores non-ride activities", async () => {
+    const mockSupabase = {} as any;
+    const runActivity = { ...mockActivity, type: "Run" };
+
+    const result = await processSingleActivity(mockSupabase, mockUser, runActivity, "token-123");
+
+    expect(result).toEqual({ action: "ignored", bike_created: false });
+    expect(getRides).not.toHaveBeenCalled();
+  });
+
+  it("auto-creates bike for unknown gear_id", async () => {
+    const mockSupabase = {} as any;
+    const activityWithGear = { ...mockActivity, gear_id: "b99999" };
+
+    vi.mocked(getRides).mockResolvedValue({ data: [], error: null } as any);
+    vi.mocked(getBikes).mockResolvedValue({ data: [], error: null } as any);
+    vi.mocked(fetchStravaGear).mockResolvedValue({
+      id: "b99999", name: "My Bike", brand_name: "Trek", model_name: "Domane", distance: 50000,
+    });
+    vi.mocked(stravaGearDisplayName).mockReturnValue("Trek Domane");
+    vi.mocked(createBike).mockResolvedValue({
+      data: { id: "bike-new", user_id: "user-1", name: "Trek Domane", strava_gear_id: "b99999", is_active: true, created_at: "2026-01-01" },
+      error: null,
+    } as any);
+    vi.mocked(createRide).mockResolvedValue({ data: { id: "ride-1" }, error: null } as any);
+
+    const result = await processSingleActivity(mockSupabase, mockUser, activityWithGear, "token-123");
+
+    expect(result).toEqual({ action: "imported", bike_created: true });
+    expect(createRide).toHaveBeenCalledWith(mockSupabase, expect.objectContaining({ bike_id: "bike-new" }));
+  });
+
+  it("matches existing bike by gear_id", async () => {
+    const mockSupabase = {} as any;
+    const activityWithGear = { ...mockActivity, gear_id: "b12345" };
+
+    vi.mocked(getRides).mockResolvedValue({ data: [], error: null } as any);
+    vi.mocked(getBikes).mockResolvedValue({
+      data: [{ id: "bike-1", strava_gear_id: "b12345" }],
+      error: null,
+    } as any);
+    vi.mocked(createRide).mockResolvedValue({ data: { id: "ride-1" }, error: null } as any);
+
+    const result = await processSingleActivity(mockSupabase, mockUser, activityWithGear, "token-123");
+
+    expect(result).toEqual({ action: "imported", bike_created: false });
+    expect(createRide).toHaveBeenCalledWith(mockSupabase, expect.objectContaining({ bike_id: "bike-1" }));
   });
 });
