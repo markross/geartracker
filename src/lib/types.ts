@@ -82,6 +82,20 @@ export interface ComponentUpdate {
   retired_at?: string | null;
 }
 
+export type WearStatus = "good" | "warning" | "critical" | "overdue";
+
+export interface ComponentWearStats {
+  component: Component;
+  distance_km: number;
+  wear_pct: number;
+  status: WearStatus;
+}
+
+export interface BikeWearStats {
+  bike: Bike;
+  components: ComponentWearStats[];
+}
+
 export interface RideInsert {
   user_id: string;
   bike_id?: string | null;

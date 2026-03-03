@@ -1,9 +1,11 @@
 "use client";
 
-import type { Component } from "@/lib/types";
+import type { Component, ComponentWearStats } from "@/lib/types";
+import WearBar from "@/app/dashboard/WearBar";
 
 interface ComponentCardProps {
   component: Component;
+  wear?: ComponentWearStats;
   onEdit: (component: Component) => void;
   onDelete: (id: string) => void;
   onRetire: (id: string) => void;
@@ -21,7 +23,7 @@ const TYPE_LABELS: Record<string, string> = {
   custom: "Custom",
 };
 
-export default function ComponentCard({ component, onEdit, onDelete, onRetire }: ComponentCardProps) {
+export default function ComponentCard({ component, wear, onEdit, onDelete, onRetire }: ComponentCardProps) {
   const isRetired = !!component.retired_at;
 
   return (
@@ -37,6 +39,9 @@ export default function ComponentCard({ component, onEdit, onDelete, onRetire }:
           </p>
           {isRetired && (
             <span className="text-sm text-zinc-400">Retired</span>
+          )}
+          {wear && !isRetired && (
+            <WearBar wear_pct={wear.wear_pct} status={wear.status} compact />
           )}
         </div>
         <div className="flex gap-2">

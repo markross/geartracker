@@ -18,6 +18,10 @@ vi.mock("@/lib/components", () => ({
   getComponents: vi.fn(),
 }));
 
+vi.mock("@/lib/wear", () => ({
+  getComponentWear: vi.fn(),
+}));
+
 vi.mock("./ComponentList", () => ({
   default: ({ initialComponents }: { initialComponents: any[] }) => (
     <div data-testid="component-list">{initialComponents.length} components</div>
@@ -26,6 +30,7 @@ vi.mock("./ComponentList", () => ({
 
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getComponents } from "@/lib/components";
+import { getComponentWear } from "@/lib/wear";
 import { redirect } from "next/navigation";
 import { render, screen } from "@testing-library/react";
 import ComponentsPage from "./page";
@@ -59,10 +64,18 @@ describe("ComponentsPage", () => {
       },
     } as any);
 
+    const mockComp = { id: "comp-1", bike_id: "bike-1", name: "KMC X11", type: "chain", max_distance_km: 5000, installed_at: "2026-01-01", retired_at: null, created_at: "2026-01-01" };
     vi.mocked(getComponents).mockResolvedValue({
-      data: [{ id: "comp-1", bike_id: "bike-1", name: "KMC X11", type: "chain", max_distance_km: 5000, installed_at: "2026-01-01", retired_at: null, created_at: "2026-01-01" }],
+      data: [mockComp],
       error: null,
     } as any);
+
+    vi.mocked(getComponentWear).mockResolvedValue({
+      component: mockComp as any,
+      distance_km: 1000,
+      wear_pct: 20,
+      status: "good",
+    });
 
     const jsx = await ComponentsPage({ params: { id: "bike-1" } });
     render(jsx);

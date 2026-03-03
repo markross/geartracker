@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { Component, ComponentType } from "@/lib/types";
+import type { Component, ComponentType, ComponentWearStats } from "@/lib/types";
 import ComponentCard from "./ComponentCard";
 import ComponentForm from "./ComponentForm";
 
 interface ComponentListProps {
   bikeId: string;
   initialComponents: Component[];
+  initialWear?: Record<string, ComponentWearStats>;
 }
 
-export default function ComponentList({ bikeId, initialComponents }: ComponentListProps) {
+export default function ComponentList({ bikeId, initialComponents, initialWear = {} }: ComponentListProps) {
   const [components, setComponents] = useState<Component[]>(initialComponents);
   const [showForm, setShowForm] = useState(false);
   const [editingComponent, setEditingComponent] = useState<Component | null>(null);
@@ -107,6 +108,7 @@ export default function ComponentList({ bikeId, initialComponents }: ComponentLi
           <ComponentCard
             key={comp.id}
             component={comp}
+            wear={initialWear[comp.id]}
             onEdit={(c) => setEditingComponent(c)}
             onDelete={handleDelete}
             onRetire={handleRetire}
