@@ -7,6 +7,9 @@ import { fetchStravaGear, stravaGearDisplayName } from "./strava/gear";
 import { getBikes, createBike } from "./bikes";
 import { getRides, createRide } from "./rides";
 
+// Unix timestamp for app launch date (2025-03-03) — only sync activities after this
+const SYNC_SINCE_EPOCH = 1741022636;
+
 export interface SyncResult {
   fetched: number;
   imported: number;
@@ -32,16 +35,13 @@ export async function processSingleActivity(
   }
 
   // Dedup check
-  const { data: existingRides, error: ridesError } = await getRides(supabase, user.id);
-  if (ridesError) {
-    throw new Error(`Failed to fetch existing rides: ${ridesError.message}`);
-  }
-  const existingStravaIds = new Set(
-    (existingRides ?? [])
-      .map((r) => r.strava_activity_id)
-      .filter((id): id is number => id !== null)
-  );
-  if (existingStravaIds.has(activity.id)) {
+  const { data: existing } = await supabase
+    .from("rides")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("strava_activity_id", activity.id)
+    .maybeSingle();
+  if (existing) {
     return { action: "skipped", bike_created: false };
   }
 
@@ -106,7 +106,7 @@ export async function syncStravaActivities(
   const token = await getValidStravaToken(user, supabase, clientId, clientSecret);
 
   // Fetch all activities (ride type only)
-  const activities = await fetchAllStravaActivities(token, 1741022636);
+  const activities = await fetchAllStravaActivities(token, SYNC_SINCE_EPOCH);
   const rides = activities.filter((a) => a.type === "Ride" || a.type === "VirtualRide");
 
   // Get existing rides to dedup by strava_activity_id

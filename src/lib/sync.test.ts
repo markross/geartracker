@@ -295,6 +295,15 @@ describe("syncStravaActivities", () => {
   });
 });
 
+function createSingleActivitySupabase(dedupResult: { data: any } = { data: null }) {
+  const chain = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue(dedupResult),
+  };
+  return { from: vi.fn().mockReturnValue(chain), _chain: chain } as any;
+}
+
 describe("processSingleActivity", () => {
   const mockActivity = {
     id: 100,
@@ -307,8 +316,7 @@ describe("processSingleActivity", () => {
   };
 
   it("imports a new ride activity", async () => {
-    const mockSupabase = {} as any;
-    vi.mocked(getRides).mockResolvedValue({ data: [], error: null } as any);
+    const mockSupabase = createSingleActivitySupabase({ data: null });
     vi.mocked(getBikes).mockResolvedValue({ data: [], error: null } as any);
     vi.mocked(createRide).mockResolvedValue({ data: { id: "ride-1" }, error: null } as any);
 
@@ -323,11 +331,7 @@ describe("processSingleActivity", () => {
   });
 
   it("skips already-imported activities", async () => {
-    const mockSupabase = {} as any;
-    vi.mocked(getRides).mockResolvedValue({
-      data: [{ strava_activity_id: 100 }],
-      error: null,
-    } as any);
+    const mockSupabase = createSingleActivitySupabase({ data: { id: "ride-existing" } });
 
     const result = await processSingleActivity(mockSupabase, mockUser, mockActivity, "token-123");
 
@@ -342,14 +346,13 @@ describe("processSingleActivity", () => {
     const result = await processSingleActivity(mockSupabase, mockUser, runActivity, "token-123");
 
     expect(result).toEqual({ action: "ignored", bike_created: false });
-    expect(getRides).not.toHaveBeenCalled();
+    expect(createRide).not.toHaveBeenCalled();
   });
 
   it("auto-creates bike for unknown gear_id", async () => {
-    const mockSupabase = {} as any;
+    const mockSupabase = createSingleActivitySupabase({ data: null });
     const activityWithGear = { ...mockActivity, gear_id: "b99999" };
 
-    vi.mocked(getRides).mockResolvedValue({ data: [], error: null } as any);
     vi.mocked(getBikes).mockResolvedValue({ data: [], error: null } as any);
     vi.mocked(fetchStravaGear).mockResolvedValue({
       id: "b99999", name: "My Bike", brand_name: "Trek", model_name: "Domane", distance: 50000,
@@ -368,10 +371,9 @@ describe("processSingleActivity", () => {
   });
 
   it("matches existing bike by gear_id", async () => {
-    const mockSupabase = {} as any;
+    const mockSupabase = createSingleActivitySupabase({ data: null });
     const activityWithGear = { ...mockActivity, gear_id: "b12345" };
 
-    vi.mocked(getRides).mockResolvedValue({ data: [], error: null } as any);
     vi.mocked(getBikes).mockResolvedValue({
       data: [{ id: "bike-1", strava_gear_id: "b12345" }],
       error: null,

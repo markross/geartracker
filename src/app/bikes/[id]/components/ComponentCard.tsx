@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Component, ComponentWearStats, DistanceUnit } from "@/lib/types";
 import { formatDistance } from "@/lib/distance";
 import WearBar from "@/app/dashboard/WearBar";
+import { COMPONENT_TYPE_LABELS } from "@/lib/constants";
 
 interface ComponentCardProps {
   component: Component;
@@ -13,18 +14,6 @@ interface ComponentCardProps {
   onDelete: (id: string) => void;
   onRetire: (id: string, retiredAt: string) => void;
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  chain: "Chain",
-  cassette: "Cassette",
-  chainring: "Chainring",
-  tire_front: "Front Tire",
-  tire_rear: "Rear Tire",
-  brake_pads: "Brake Pads",
-  cables: "Cables",
-  bar_tape: "Bar Tape",
-  custom: "Custom",
-};
 
 export default function ComponentCard({ component, wear, distanceUnit, onEdit, onDelete, onRetire }: ComponentCardProps) {
   const isRetired = !!component.retired_at;
@@ -40,7 +29,7 @@ export default function ComponentCard({ component, wear, distanceUnit, onEdit, o
         <div>
           <h4 className="font-semibold">{component.name}</h4>
           <p className="text-sm text-zinc-500">
-            {TYPE_LABELS[component.type] || component.type} · {formatDistance(wear?.distance_km ?? 0, distanceUnit)} / {formatDistance(component.max_distance_km, distanceUnit)} limit
+            {COMPONENT_TYPE_LABELS[component.type] ?? component.type} · {formatDistance(wear?.distance_km ?? 0, distanceUnit)} / {formatDistance(component.max_distance_km, distanceUnit)} limit
           </p>
           {isRetired && (
             <span className="text-sm text-zinc-400">Retired</span>

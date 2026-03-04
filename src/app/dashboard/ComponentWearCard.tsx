@@ -3,18 +3,7 @@
 import type { ComponentWearStats, DistanceUnit } from "@/lib/types";
 import { formatDistance } from "@/lib/distance";
 import WearBar from "./WearBar";
-
-const TYPE_LABELS: Record<string, string> = {
-  chain: "Chain",
-  cassette: "Cassette",
-  chainring: "Chainring",
-  tire_front: "Front Tire",
-  tire_rear: "Rear Tire",
-  brake_pads: "Brake Pads",
-  cables: "Cables",
-  bar_tape: "Bar Tape",
-  custom: "Custom",
-};
+import { COMPONENT_TYPE_LABELS } from "@/lib/constants";
 
 interface ComponentWearCardProps {
   stats: ComponentWearStats;
@@ -39,7 +28,7 @@ export default function ComponentWearCard({ stats, distanceUnit }: ComponentWear
         <div>
           <h4 className="font-medium">{component.name}</h4>
           <p className="text-xs text-zinc-500">
-            {TYPE_LABELS[component.type] || component.type}
+            {COMPONENT_TYPE_LABELS[component.type] ?? component.type}
           </p>
         </div>
         <p className="text-sm text-zinc-600">

@@ -25,12 +25,11 @@ export default async function ComponentsPage({ params }: PageProps) {
   ]);
   const distanceUnit: DistanceUnit = profile?.distance_unit ?? "km";
 
-  const wearMap: Record<string, ComponentWearStats> = {};
-  for (const comp of components ?? []) {
-    if (!comp.retired_at) {
-      wearMap[comp.id] = await getComponentWear(supabase, comp);
-    }
-  }
+  const activeComps = (components ?? []).filter((c) => !c.retired_at);
+  const wearEntries = await Promise.all(
+    activeComps.map(async (comp) => [comp.id, await getComponentWear(supabase, comp)] as const)
+  );
+  const wearMap: Record<string, ComponentWearStats> = Object.fromEntries(wearEntries);
 
   return (
     <div className="mx-auto max-w-2xl p-6">

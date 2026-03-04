@@ -3,18 +3,7 @@
 import { useState } from "react";
 import type { Component, ComponentFormData, ComponentType, DistanceUnit } from "@/lib/types";
 import { kmToMiles, milesToKm, distanceLabel } from "@/lib/distance";
-
-const COMPONENT_TYPES: { value: ComponentType; label: string }[] = [
-  { value: "chain", label: "Chain" },
-  { value: "cassette", label: "Cassette" },
-  { value: "chainring", label: "Chainring" },
-  { value: "tire_front", label: "Front Tire" },
-  { value: "tire_rear", label: "Rear Tire" },
-  { value: "brake_pads", label: "Brake Pads" },
-  { value: "cables", label: "Cables" },
-  { value: "bar_tape", label: "Bar Tape" },
-  { value: "custom", label: "Custom" },
-];
+import { VALID_COMPONENT_TYPES, COMPONENT_TYPE_LABELS } from "@/lib/constants";
 
 interface ComponentFormProps {
   component?: Component | null;
@@ -27,7 +16,7 @@ export default function ComponentForm({ component, distanceUnit = "km", onSubmit
   const [name, setName] = useState(component?.name ?? "");
   const [type, setType] = useState<ComponentType>(component?.type ?? "chain");
   const [installedAt, setInstalledAt] = useState(
-    component?.installed_at ? component.installed_at.slice(0, 10) : new Date().toISOString().slice(0, 10)
+    () => component?.installed_at ? component.installed_at.slice(0, 10) : new Date().toISOString().slice(0, 10)
   );
   const initialDisplay = component?.max_distance_km
     ? distanceUnit === "mi" ? Math.round(kmToMiles(component.max_distance_km)).toString() : component.max_distance_km.toString()
@@ -73,8 +62,8 @@ export default function ComponentForm({ component, distanceUnit = "km", onSubmit
           onChange={(e) => setType(e.target.value as ComponentType)}
           className="mt-1 w-full rounded border border-zinc-300 px-3 py-2"
         >
-          {COMPONENT_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
+          {VALID_COMPONENT_TYPES.map((v) => (
+            <option key={v} value={v}>{COMPONENT_TYPE_LABELS[v]}</option>
           ))}
         </select>
       </div>
