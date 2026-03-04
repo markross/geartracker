@@ -17,8 +17,7 @@ Bike component wear tracking app synced with Strava.
 - Manual Strava sync first, webhooks later
 
 ## Shell
-- Node 24 via nvm. `.nvmrc` is in repo root.
-- For Bash tool calls, prefix with: `export PATH="$HOME/.nvm/versions/node/v24.12.0/bin:$PATH" &&`
+- Node 24 via nvm. `.nvmrc` is in repo root. User has nvm auto-use — no PATH prefix needed.
 
 ## Conventions
 - All API routes under `app/api/`

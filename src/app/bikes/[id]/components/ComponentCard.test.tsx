@@ -47,10 +47,22 @@ describe("ComponentCard", () => {
     expect(onDelete).toHaveBeenCalledWith("comp-1");
   });
 
-  it("calls onRetire when Retire clicked", () => {
+  it("shows date picker on Retire click, calls onRetire with date on confirm", () => {
     const onRetire = vi.fn();
     render(<ComponentCard component={component} distanceUnit="km" onEdit={vi.fn()} onDelete={vi.fn()} onRetire={onRetire} />);
     fireEvent.click(screen.getByText("Retire"));
-    expect(onRetire).toHaveBeenCalledWith("comp-1");
+    expect(screen.getByLabelText("Retire date")).toBeInTheDocument();
+    expect(screen.getByText("Confirm Retire")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Retire date"), { target: { value: "2026-06-15" } });
+    fireEvent.click(screen.getByText("Confirm Retire"));
+    expect(onRetire).toHaveBeenCalledWith("comp-1", "2026-06-15");
+  });
+
+  it("hides date picker when Cancel clicked during retire", () => {
+    render(<ComponentCard component={component} distanceUnit="km" onEdit={vi.fn()} onDelete={vi.fn()} onRetire={vi.fn()} />);
+    fireEvent.click(screen.getByText("Retire"));
+    fireEvent.click(screen.getByText("Cancel"));
+    expect(screen.queryByLabelText("Retire date")).not.toBeInTheDocument();
+    expect(screen.getByText("Retire")).toBeInTheDocument();
   });
 });

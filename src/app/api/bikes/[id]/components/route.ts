@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { requireUser, verifyBikeOwnership } from "@/lib/auth";
 import { getComponents, createComponent } from "@/lib/components";
 import { VALID_COMPONENT_TYPES } from "@/lib/constants";
+import type { ComponentInsert } from "@/lib/types";
 
 interface RouteContext {
   params: { id: string };
@@ -55,12 +56,17 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const { data, error } = await createComponent(supabase, {
+  const insert: ComponentInsert = {
     bike_id: bikeId,
     name: name.trim(),
     type,
     max_distance_km,
-  });
+  };
+  if (typeof body.installed_at === "string" && body.installed_at) {
+    insert.installed_at = body.installed_at;
+  }
+
+  const { data, error } = await createComponent(supabase, insert);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

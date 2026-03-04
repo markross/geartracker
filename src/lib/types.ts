@@ -75,10 +75,18 @@ export interface ComponentInsert {
   installed_at?: string;
 }
 
+export interface ComponentFormData {
+  name: string;
+  type: ComponentType;
+  max_distance_km: number;
+  installed_at: string;
+}
+
 export interface ComponentUpdate {
   name?: string;
   type?: ComponentType;
   max_distance_km?: number;
+  installed_at?: string;
   retired_at?: string | null;
 }
 

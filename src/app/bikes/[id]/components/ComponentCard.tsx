@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Component, ComponentWearStats, DistanceUnit } from "@/lib/types";
 import { formatDistance } from "@/lib/distance";
 import WearBar from "@/app/dashboard/WearBar";
@@ -10,7 +11,7 @@ interface ComponentCardProps {
   distanceUnit: DistanceUnit;
   onEdit: (component: Component) => void;
   onDelete: (id: string) => void;
-  onRetire: (id: string) => void;
+  onRetire: (id: string, retiredAt: string) => void;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -27,6 +28,8 @@ const TYPE_LABELS: Record<string, string> = {
 
 export default function ComponentCard({ component, wear, distanceUnit, onEdit, onDelete, onRetire }: ComponentCardProps) {
   const isRetired = !!component.retired_at;
+  const [showRetireDate, setShowRetireDate] = useState(false);
+  const [retireDate, setRetireDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   return (
     <div
@@ -47,13 +50,36 @@ export default function ComponentCard({ component, wear, distanceUnit, onEdit, o
           )}
         </div>
         <div className="flex gap-2">
-          {!isRetired && (
+          {!isRetired && !showRetireDate && (
             <button
-              onClick={() => onRetire(component.id)}
+              onClick={() => setShowRetireDate(true)}
               className="rounded bg-yellow-100 px-3 py-1 text-sm text-yellow-800 hover:bg-yellow-200"
             >
               Retire
             </button>
+          )}
+          {showRetireDate && (
+            <>
+              <input
+                type="date"
+                aria-label="Retire date"
+                value={retireDate}
+                onChange={(e) => setRetireDate(e.target.value)}
+                className="rounded border border-zinc-300 px-2 py-1 text-sm"
+              />
+              <button
+                onClick={() => { onRetire(component.id, retireDate); setShowRetireDate(false); }}
+                className="rounded bg-yellow-600 px-3 py-1 text-sm text-white hover:bg-yellow-700"
+              >
+                Confirm Retire
+              </button>
+              <button
+                onClick={() => setShowRetireDate(false)}
+                className="rounded bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200"
+              >
+                Cancel
+              </button>
+            </>
           )}
           <button
             onClick={() => onEdit(component)}

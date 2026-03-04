@@ -144,4 +144,17 @@ describe("POST /api/bikes/[id]/components", () => {
     expect(res.status).toBe(201);
     expect(body.component).toEqual(mockComponent);
   });
+
+  it("passes installed_at to createComponent when provided", async () => {
+    vi.mocked(requireUser).mockResolvedValue(mockUser as any);
+    vi.mocked(createComponent).mockResolvedValue({ data: mockComponent, error: null } as any);
+
+    const req = new Request("http://localhost/api/bikes/bike-1/components", {
+      method: "POST",
+      body: JSON.stringify({ name: "KMC X11", type: "chain", max_distance_km: 5000, installed_at: "2026-02-15" }),
+    });
+    await POST(req, { params });
+
+    expect(createComponent).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ installed_at: "2026-02-15" }));
+  });
 });

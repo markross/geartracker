@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Component, ComponentType, ComponentWearStats, DistanceUnit } from "@/lib/types";
+import type { Component, ComponentFormData, ComponentWearStats, DistanceUnit } from "@/lib/types";
 import ComponentCard from "./ComponentCard";
 import ComponentForm from "./ComponentForm";
 
@@ -18,7 +18,7 @@ export default function ComponentList({ bikeId, initialComponents, initialWear =
   const [editingComponent, setEditingComponent] = useState<Component | null>(null);
   const [error, setError] = useState("");
 
-  async function handleCreate(data: { name: string; type: ComponentType; max_distance_km: number }) {
+  async function handleCreate(data: ComponentFormData) {
     setError("");
     const res = await fetch(`/api/bikes/${bikeId}/components`, {
       method: "POST",
@@ -35,7 +35,7 @@ export default function ComponentList({ bikeId, initialComponents, initialWear =
     setShowForm(false);
   }
 
-  async function handleUpdate(data: { name: string; type: ComponentType; max_distance_km: number }) {
+  async function handleUpdate(data: ComponentFormData) {
     if (!editingComponent) return;
     setError("");
     const res = await fetch(`/api/bikes/${bikeId}/components/${editingComponent.id}`, {
@@ -63,12 +63,12 @@ export default function ComponentList({ bikeId, initialComponents, initialWear =
     setComponents((prev) => prev.filter((c) => c.id !== id));
   }
 
-  async function handleRetire(id: string) {
+  async function handleRetire(id: string, retiredAt: string) {
     setError("");
     const res = await fetch(`/api/bikes/${bikeId}/components/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "retire" }),
+      body: JSON.stringify({ action: "retire", retired_at: retiredAt }),
     });
     if (!res.ok) {
       setError("Failed to retire component");

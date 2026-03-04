@@ -3,11 +3,12 @@ import { describe, it, expect, vi } from "vitest";
 import ComponentForm from "./ComponentForm";
 
 describe("ComponentForm", () => {
-  it("renders empty form for create", () => {
+  it("renders empty form for create with today as installed date", () => {
     render(<ComponentForm onSubmit={vi.fn()} onCancel={vi.fn()} />);
     expect(screen.getByLabelText("Name")).toHaveValue("");
     expect(screen.getByLabelText("Type")).toHaveValue("chain");
     expect(screen.getByLabelText("Max Distance (km)")).toHaveValue(null);
+    expect(screen.getByLabelText("Installed Date")).toHaveValue(new Date().toISOString().slice(0, 10));
     expect(screen.getByText("Create")).toBeInTheDocument();
   });
 
@@ -26,6 +27,7 @@ describe("ComponentForm", () => {
     expect(screen.getByLabelText("Name")).toHaveValue("KMC X11");
     expect(screen.getByLabelText("Type")).toHaveValue("chain");
     expect(screen.getByLabelText("Max Distance (km)")).toHaveValue(5000);
+    expect(screen.getByLabelText("Installed Date")).toHaveValue("2026-01-01");
     expect(screen.getByText("Update")).toBeInTheDocument();
   });
 
@@ -54,7 +56,7 @@ describe("ComponentForm", () => {
     fireEvent.change(screen.getByLabelText("Type"), { target: { value: "cassette" } });
     fireEvent.change(screen.getByLabelText("Max Distance (km)"), { target: { value: "8000" } });
     fireEvent.click(screen.getByText("Create"));
-    expect(onSubmit).toHaveBeenCalledWith({ name: "KMC X11", type: "cassette", max_distance_km: 8000 });
+    expect(onSubmit).toHaveBeenCalledWith({ name: "KMC X11", type: "cassette", max_distance_km: 8000, installed_at: expect.any(String) });
   });
 
   it("calls onCancel when Cancel clicked", () => {

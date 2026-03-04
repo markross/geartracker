@@ -83,6 +83,7 @@ describe("ComponentList", () => {
 
     render(<ComponentList bikeId="bike-1" initialComponents={[mockComponent]} distanceUnit="km" />);
     fireEvent.click(screen.getByText("Retire"));
+    fireEvent.click(screen.getByText("Confirm Retire"));
 
     await waitFor(() => {
       expect(screen.getByText("Retired")).toBeInTheDocument();

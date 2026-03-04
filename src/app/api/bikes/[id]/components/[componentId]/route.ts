@@ -38,6 +38,9 @@ export async function PUT(request: Request, { params }: RouteContext) {
     }
     updates.max_distance_km = body.max_distance_km;
   }
+  if (typeof body.installed_at === "string" && body.installed_at) {
+    updates.installed_at = body.installed_at;
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
@@ -93,7 +96,8 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const { data, error } = await retireComponent(supabase, componentId, new Date().toISOString());
+  const retiredAt = (typeof body.retired_at === "string" && body.retired_at) ? body.retired_at : new Date().toISOString();
+  const { data, error } = await retireComponent(supabase, componentId, retiredAt);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

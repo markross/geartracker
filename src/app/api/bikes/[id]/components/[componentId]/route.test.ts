@@ -127,6 +127,18 @@ describe("PUT /api/bikes/[id]/components/[componentId]", () => {
     expect(updateComponent).toHaveBeenCalledWith(expect.anything(), "comp-1", { name: "KMC X12" });
   });
 
+  it("passes installed_at in updates when provided", async () => {
+    vi.mocked(updateComponent).mockResolvedValue({ data: mockComponent, error: null } as any);
+
+    const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
+      method: "PUT",
+      body: JSON.stringify({ installed_at: "2026-02-01" }),
+    });
+    const res = await PUT(req, { params });
+    expect(res.status).toBe(200);
+    expect(updateComponent).toHaveBeenCalledWith(expect.anything(), "comp-1", { installed_at: "2026-02-01" });
+  });
+
   it("returns 500 on database error", async () => {
     vi.mocked(updateComponent).mockResolvedValue({ data: null, error: { message: "DB error" } } as any);
 
@@ -216,5 +228,21 @@ describe("PATCH /api/bikes/[id]/components/[componentId]", () => {
     expect(res.status).toBe(200);
     expect(body.component.retired_at).toBeTruthy();
     expect(retireComponent).toHaveBeenCalledWith(expect.anything(), "comp-1", expect.any(String));
+  });
+
+  it("retires with custom retired_at date when provided", async () => {
+    const retired = { ...mockComponent, retired_at: "2026-06-15" };
+    vi.mocked(retireComponent).mockResolvedValue({ data: retired, error: null } as any);
+
+    const req = new Request("http://localhost/api/bikes/bike-1/components/comp-1", {
+      method: "PATCH",
+      body: JSON.stringify({ action: "retire", retired_at: "2026-06-15" }),
+    });
+    const res = await PATCH(req, { params });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.component.retired_at).toBe("2026-06-15");
+    expect(retireComponent).toHaveBeenCalledWith(expect.anything(), "comp-1", "2026-06-15");
   });
 });
