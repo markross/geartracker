@@ -19,7 +19,7 @@ export interface SyncResult {
 }
 
 export interface SingleActivityResult {
-  action: "imported" | "skipped" | "ignored";
+  action: "imported" | "skipped" | "ignored" | "deleted";
   bike_created: boolean;
 }
 
@@ -106,7 +106,7 @@ export async function syncStravaActivities(
   const token = await getValidStravaToken(user, supabase, clientId, clientSecret);
 
   // Fetch all activities (ride type only)
-  const activities = await fetchAllStravaActivities(token, SYNC_SINCE_EPOCH);
+  const activities = await fetchAllStravaActivities(token);
   const rides = activities.filter((a) => a.type === "Ride" || a.type === "VirtualRide");
 
   // Get existing rides to dedup by strava_activity_id

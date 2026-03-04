@@ -27,7 +27,8 @@ export async function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users to login
   if (!user && !request.nextUrl.pathname.startsWith("/login") &&
-      !request.nextUrl.pathname.startsWith("/api/auth")) {
+      !request.nextUrl.pathname.startsWith("/api/auth") &&
+      !request.nextUrl.pathname.startsWith("/api/webhooks")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

@@ -13,9 +13,14 @@ vi.mock("../sync", () => ({
   processSingleActivity: vi.fn(),
 }));
 
+vi.mock("../rides", () => ({
+  deleteRideByStravaId: vi.fn(),
+}));
+
 import { fetchStravaActivity } from "./activities";
 import { getValidStravaToken } from "./token";
 import { processSingleActivity } from "../sync";
+import { deleteRideByStravaId } from "../rides";
 
 const mockUser = {
   id: "user-1",
@@ -60,10 +65,31 @@ describe("processWebhookEvent", () => {
     expect(result).toEqual({ action: "ignored", bike_created: false });
   });
 
-  it("ignores non-create events", async () => {
+  it("ignores update events", async () => {
     const event = { ...baseEvent, aspect_type: "update" as const };
     const result = await processWebhookEvent({} as any, event, "cid", "csec");
     expect(result).toEqual({ action: "ignored", bike_created: false });
+  });
+
+  it("deletes ride on activity.delete event", async () => {
+    const mockSupabase = createMockSupabase({ data: mockUser, error: null });
+    vi.mocked(deleteRideByStravaId).mockResolvedValue({ error: null } as any);
+
+    const event = { ...baseEvent, aspect_type: "delete" as const };
+    const result = await processWebhookEvent(mockSupabase, event, "cid", "csec");
+
+    expect(result).toEqual({ action: "deleted", bike_created: false });
+    expect(deleteRideByStravaId).toHaveBeenCalledWith(mockSupabase, "user-1", 999);
+  });
+
+  it("throws when delete fails", async () => {
+    const mockSupabase = createMockSupabase({ data: mockUser, error: null });
+    vi.mocked(deleteRideByStravaId).mockResolvedValue({ error: { message: "DB error" } } as any);
+
+    const event = { ...baseEvent, aspect_type: "delete" as const };
+    await expect(
+      processWebhookEvent(mockSupabase, event, "cid", "csec")
+    ).rejects.toThrow("Failed to delete ride for activity 999");
   });
 
   it("processes activity.create events end-to-end", async () => {

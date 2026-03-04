@@ -35,6 +35,18 @@ export async function getUnassignedRides(supabase: SupabaseClient, userId: strin
     .order("started_at", { ascending: false });
 }
 
+export async function deleteRideByStravaId(
+  supabase: SupabaseClient,
+  userId: string,
+  stravaActivityId: number
+) {
+  return supabase
+    .from("rides")
+    .delete()
+    .eq("user_id", userId)
+    .eq("strava_activity_id", stravaActivityId);
+}
+
 export async function updateRideBike(
   supabase: SupabaseClient,
   rideId: string,
