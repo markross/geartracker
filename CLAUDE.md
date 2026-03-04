@@ -19,6 +19,9 @@ Bike component wear tracking app synced with Strava.
 ## Shell
 - Node 24 via nvm. `.nvmrc` is in repo root. User has nvm auto-use — no PATH prefix needed.
 
+## Workflow
+- Always commit immediately after every piece of work — don't wait to be prompted
+
 ## Conventions
 - All API routes under `app/api/`
 - Tests colocated: `foo.test.ts` next to `foo.ts`
