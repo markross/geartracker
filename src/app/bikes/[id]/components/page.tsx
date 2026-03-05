@@ -2,10 +2,12 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getComponents } from "@/lib/components";
 import { getComponentWear } from "@/lib/wear";
 import { getRidesForBike } from "@/lib/rides";
+import { getBikes } from "@/lib/bikes";
 import { formatDistance } from "@/lib/distance";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ComponentList from "./ComponentList";
+import BikeRideList from "./BikeRideList";
 import type { ComponentWearStats, DistanceUnit } from "@/lib/types";
 
 interface PageProps {
@@ -21,10 +23,11 @@ export default async function ComponentsPage({ params }: PageProps) {
   }
 
   const { id: bikeId } = await params;
-  const [{ data: components }, { data: profile }, { data: rides }] = await Promise.all([
+  const [{ data: components }, { data: profile }, { data: rides }, { data: allBikes }] = await Promise.all([
     getComponents(supabase, bikeId),
     supabase.from("users").select("distance_unit").eq("id", user.id).single(),
     getRidesForBike(supabase, user.id, bikeId),
+    getBikes(supabase, user.id),
   ]);
   const distanceUnit: DistanceUnit = profile?.distance_unit ?? "km";
   const totalDistanceKm = (rides ?? []).reduce((sum, r) => sum + r.distance_km, 0);
@@ -52,6 +55,10 @@ export default async function ComponentsPage({ params }: PageProps) {
         </div>
       </div>
       <ComponentList bikeId={bikeId} initialComponents={components ?? []} initialWear={wearMap} distanceUnit={distanceUnit} />
+      <div className="mt-8">
+        <h2 className="mb-3 text-lg font-semibold">Rides</h2>
+        <BikeRideList rides={rides ?? []} bikes={(allBikes ?? []).filter((b) => b.is_active)} currentBikeId={bikeId} distanceUnit={distanceUnit} />
+      </div>
     </div>
   );
 }
