@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { Bike } from "@/lib/types";
+import type { Bike, DistanceUnit } from "@/lib/types";
 import BikeCard from "./BikeCard";
 import BikeForm from "./BikeForm";
 
 interface BikeListProps {
   initialBikes: Bike[];
+  bikeTotals: Record<string, number>;
+  distanceUnit: DistanceUnit;
 }
 
-export default function BikeList({ initialBikes }: BikeListProps) {
+export default function BikeList({ initialBikes, bikeTotals, distanceUnit }: BikeListProps) {
   const [bikes, setBikes] = useState<Bike[]>(initialBikes);
   const [showForm, setShowForm] = useState(false);
   const [editingBike, setEditingBike] = useState<Bike | null>(null);
@@ -91,6 +93,8 @@ export default function BikeList({ initialBikes }: BikeListProps) {
           <BikeCard
             key={bike.id}
             bike={bike}
+            totalDistanceKm={bikeTotals[bike.id] ?? 0}
+            distanceUnit={distanceUnit}
             onEdit={(b) => setEditingBike(b)}
             onDelete={handleDelete}
           />

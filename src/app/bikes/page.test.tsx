@@ -13,6 +13,10 @@ vi.mock("@/lib/bikes", () => ({
   getBikes: vi.fn(),
 }));
 
+vi.mock("@/lib/rides", () => ({
+  getBikeTotalDistances: vi.fn().mockResolvedValue({}),
+}));
+
 // Mock BikeList as a simple div to avoid client component issues in tests
 vi.mock("./BikeList", () => ({
   default: ({ initialBikes }: { initialBikes: any[] }) => (
@@ -56,6 +60,11 @@ describe("BikesPage", () => {
       created_at: "2026-01-01T00:00:00Z",
     };
 
+    const fromChain: Record<string, any> = {};
+    fromChain.select = vi.fn().mockReturnValue(fromChain);
+    fromChain.eq = vi.fn().mockReturnValue(fromChain);
+    fromChain.single = vi.fn().mockResolvedValue({ data: { distance_unit: "km" }, error: null });
+
     vi.mocked(createSupabaseServerClient).mockResolvedValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({
@@ -63,6 +72,7 @@ describe("BikesPage", () => {
           error: null,
         }),
       },
+      from: vi.fn().mockReturnValue(fromChain),
     } as any);
 
     vi.mocked(getBikes).mockResolvedValue({

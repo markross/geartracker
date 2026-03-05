@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import type { Bike } from "@/lib/types";
+import type { Bike, DistanceUnit } from "@/lib/types";
+import { formatDistance } from "@/lib/distance";
 
 interface BikeCardProps {
   bike: Bike;
+  totalDistanceKm: number;
+  distanceUnit: DistanceUnit;
   onEdit: (bike: Bike) => void;
   onDelete: (id: string) => void;
 }
 
-export default function BikeCard({ bike, onEdit, onDelete }: BikeCardProps) {
+export default function BikeCard({ bike, totalDistanceKm, distanceUnit, onEdit, onDelete }: BikeCardProps) {
   return (
     <div className="rounded-lg border border-zinc-200 p-4" data-testid={`bike-card-${bike.id}`}>
       <div className="flex items-center justify-between">
@@ -17,11 +20,12 @@ export default function BikeCard({ bike, onEdit, onDelete }: BikeCardProps) {
           <Link href={`/bikes/${bike.id}/components`} className="text-lg font-semibold hover:underline">
             {bike.name}
           </Link>
-          <span
-            className={`text-sm ${bike.is_active ? "text-green-600" : "text-zinc-400"}`}
-          >
-            {bike.is_active ? "Active" : "Inactive"}
-          </span>
+          <div className="flex gap-3 text-sm">
+            <span className={bike.is_active ? "text-green-600" : "text-zinc-400"}>
+              {bike.is_active ? "Active" : "Inactive"}
+            </span>
+            <span className="text-zinc-500">{formatDistance(totalDistanceKm, distanceUnit)} total</span>
+          </div>
         </div>
         <div className="flex gap-2">
           <button

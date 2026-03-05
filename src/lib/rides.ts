@@ -35,6 +35,25 @@ export async function getUnassignedRides(supabase: SupabaseClient, userId: strin
     .order("started_at", { ascending: false });
 }
 
+export async function getBikeTotalDistances(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Record<string, number>> {
+  const { data } = await supabase
+    .from("rides")
+    .select("bike_id, distance_km")
+    .eq("user_id", userId)
+    .not("bike_id", "is", null);
+
+  const totals: Record<string, number> = {};
+  for (const ride of data ?? []) {
+    if (ride.bike_id) {
+      totals[ride.bike_id] = (totals[ride.bike_id] ?? 0) + ride.distance_km;
+    }
+  }
+  return totals;
+}
+
 export async function deleteRideByStravaId(
   supabase: SupabaseClient,
   userId: string,

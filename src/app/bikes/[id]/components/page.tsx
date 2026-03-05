@@ -1,6 +1,8 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { getComponents } from "@/lib/components";
 import { getComponentWear } from "@/lib/wear";
+import { getRidesForBike } from "@/lib/rides";
+import { formatDistance } from "@/lib/distance";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ComponentList from "./ComponentList";
@@ -19,11 +21,13 @@ export default async function ComponentsPage({ params }: PageProps) {
   }
 
   const { id: bikeId } = await params;
-  const [{ data: components }, { data: profile }] = await Promise.all([
+  const [{ data: components }, { data: profile }, { data: rides }] = await Promise.all([
     getComponents(supabase, bikeId),
     supabase.from("users").select("distance_unit").eq("id", user.id).single(),
+    getRidesForBike(supabase, user.id, bikeId),
   ]);
   const distanceUnit: DistanceUnit = profile?.distance_unit ?? "km";
+  const totalDistanceKm = (rides ?? []).reduce((sum, r) => sum + r.distance_km, 0);
 
   const activeComps = (components ?? []).filter((c) => !c.retired_at);
   const wearEntries = await Promise.all(
@@ -34,7 +38,10 @@ export default async function ComponentsPage({ params }: PageProps) {
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Components</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Components</h1>
+          <p className="text-sm text-zinc-500">{formatDistance(totalDistanceKm, distanceUnit)} total on this bike</p>
+        </div>
         <div className="flex gap-3">
           <Link href="/dashboard" className="text-blue-600 hover:underline">
             Dashboard

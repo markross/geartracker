@@ -22,6 +22,10 @@ vi.mock("@/lib/wear", () => ({
   getComponentWear: vi.fn(),
 }));
 
+vi.mock("@/lib/rides", () => ({
+  getRidesForBike: vi.fn().mockResolvedValue({ data: [], error: null }),
+}));
+
 vi.mock("./ComponentList", () => ({
   default: ({ initialComponents }: { initialComponents: any[] }) => (
     <div data-testid="component-list">{initialComponents.length} components</div>
