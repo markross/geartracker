@@ -10,9 +10,10 @@ interface RideTabsProps {
   allRides: Ride[];
   bikes: Bike[];
   distanceUnit: DistanceUnit;
+  ridesCount: number;
 }
 
-export default function RideTabs({ unassignedRides, allRides, bikes, distanceUnit }: RideTabsProps) {
+export default function RideTabs({ unassignedRides, allRides, ridesCount, bikes, distanceUnit }: RideTabsProps) {
   const [tab, setTab] = useState<"unassigned" | "all">("unassigned");
 
   return (
@@ -28,7 +29,7 @@ export default function RideTabs({ unassignedRides, allRides, bikes, distanceUni
           onClick={() => setTab("all")}
           className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${tab === "all" ? "bg-white shadow-sm" : "text-zinc-600 hover:text-zinc-900"}`}
         >
-          All Rides ({allRides.length})
+          All Rides ({ridesCount})
         </button>
       </div>
       {tab === "unassigned" ? (

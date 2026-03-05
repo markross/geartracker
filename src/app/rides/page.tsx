@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { getUnassignedRides, getRides } from "@/lib/rides";
+import {getUnassignedRides, getRides, getRidesCount} from "@/lib/rides";
 import { getBikes } from "@/lib/bikes";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -16,9 +16,10 @@ export default async function RidesPage() {
     redirect("/");
   }
 
-  const [{ data: unassignedRides }, { data: allRides }, { data: bikes }, { data: profile }] = await Promise.all([
+  const [{ data: unassignedRides }, { data: allRides }, { count: ridesCount }, { data: bikes }, { data: profile }] = await Promise.all([
     getUnassignedRides(supabase, user.id),
     getRides(supabase, user.id),
+    getRidesCount(supabase, user.id),
     getBikes(supabase, user.id),
     supabase.from("users").select("distance_unit").eq("id", user.id).single(),
   ]);
@@ -36,6 +37,7 @@ export default async function RidesPage() {
       <RideTabs
         unassignedRides={unassignedRides ?? []}
         allRides={allRides ?? []}
+        ridesCount={ridesCount ?? 0}
         bikes={activeBikes}
         distanceUnit={distanceUnit}
       />

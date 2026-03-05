@@ -9,6 +9,10 @@ export async function getRides(supabase: SupabaseClient, userId: string) {
     .order("started_at", { ascending: false });
 }
 
+export async function getRidesCount(supabase: SupabaseClient, userId: string) {
+  return supabase.from("rides").select('*', { count: 'exact', head: true }).eq('user_id', userId);
+}
+
 export async function getRidesForBike(
   supabase: SupabaseClient,
   userId: string,
