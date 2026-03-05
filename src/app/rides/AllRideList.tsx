@@ -49,7 +49,8 @@ export default function AllRideList({ rides: initialRides, bikes, distanceUnit }
   return (
     <div className="space-y-2">
       {pageRides.map((ride) => {
-        const date = new Date(ride.started_at).toLocaleDateString();
+        const d = new Date(ride.started_at);
+        const date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
         const currentBike = ride.bike_id;
         const otherOptions = bikes.filter((b) => b.id !== currentBike);
         return (

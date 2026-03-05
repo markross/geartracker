@@ -45,7 +45,8 @@ export default function BikeRideList({ rides: initialRides, bikes, currentBikeId
         {rides.length} ride{rides.length !== 1 ? "s" : ""} on this bike
       </p>
       {rides.map((ride) => {
-        const date = new Date(ride.started_at).toLocaleDateString();
+        const d = new Date(ride.started_at);
+        const date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
         return (
           <div key={ride.id} className="flex items-center justify-between rounded border border-zinc-200 px-3 py-2 text-sm">
             <div>
