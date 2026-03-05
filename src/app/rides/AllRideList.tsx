@@ -10,9 +10,14 @@ interface AllRideListProps {
   distanceUnit: DistanceUnit;
 }
 
+const PAGE_SIZE = 100;
+
 export default function AllRideList({ rides: initialRides, bikes, distanceUnit }: AllRideListProps) {
   const [rides, setRides] = useState<Ride[]>(initialRides);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const totalPages = Math.ceil(rides.length / PAGE_SIZE);
+  const pageRides = rides.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   async function handleReassign(rideId: string, value: string) {
     if (!value) return;
@@ -43,7 +48,7 @@ export default function AllRideList({ rides: initialRides, bikes, distanceUnit }
 
   return (
     <div className="space-y-2">
-      {rides.map((ride) => {
+      {pageRides.map((ride) => {
         const date = new Date(ride.started_at).toLocaleDateString();
         const currentBike = ride.bike_id;
         const otherOptions = bikes.filter((b) => b.id !== currentBike);
@@ -72,6 +77,25 @@ export default function AllRideList({ rides: initialRides, bikes, distanceUnit }
           </div>
         );
       })}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2 text-sm">
+          <button
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 0}
+            className="rounded border border-zinc-300 px-3 py-1 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <span className="text-zinc-500">Page {page + 1} of {totalPages}</span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= totalPages - 1}
+            className="rounded border border-zinc-300 px-3 py-1 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -83,4 +83,61 @@ describe("AllRideList", () => {
     render(<AllRideList {...defaultProps} rides={[]} />);
     expect(screen.getByText(/no rides/i)).toBeInTheDocument();
   });
+
+  describe("pagination", () => {
+    const PAGE_SIZE = 100;
+    const manyRides: Ride[] = Array.from({ length: 150 }, (_, i) => ({
+      id: `r${i}`,
+      user_id: "u1",
+      bike_id: "bike-1",
+      strava_activity_id: null,
+      name: `Ride ${i}`,
+      distance_km: 10,
+      moving_time_seconds: 600,
+      started_at: `2026-03-01T08:00:00Z`,
+      created_at: `2026-03-01T08:00:00Z`,
+    }));
+
+    it("shows only first 100 rides by default", () => {
+      render(<AllRideList rides={manyRides} bikes={bikes} distanceUnit="km" />);
+      const rows = screen.getAllByTestId(/^ride-row-/);
+      expect(rows).toHaveLength(PAGE_SIZE);
+    });
+
+    it("shows page info", () => {
+      render(<AllRideList rides={manyRides} bikes={bikes} distanceUnit="km" />);
+      expect(screen.getByText(/page 1 of 2/i)).toBeInTheDocument();
+    });
+
+    it("navigates to next page", () => {
+      render(<AllRideList rides={manyRides} bikes={bikes} distanceUnit="km" />);
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+      const rows = screen.getAllByTestId(/^ride-row-/);
+      expect(rows).toHaveLength(50);
+      expect(screen.getByText(/page 2 of 2/i)).toBeInTheDocument();
+    });
+
+    it("navigates back to previous page", () => {
+      render(<AllRideList rides={manyRides} bikes={bikes} distanceUnit="km" />);
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+      fireEvent.click(screen.getByRole("button", { name: /prev/i }));
+      expect(screen.getByText(/page 1 of 2/i)).toBeInTheDocument();
+    });
+
+    it("disables prev on first page", () => {
+      render(<AllRideList rides={manyRides} bikes={bikes} distanceUnit="km" />);
+      expect(screen.getByRole("button", { name: /prev/i })).toBeDisabled();
+    });
+
+    it("disables next on last page", () => {
+      render(<AllRideList rides={manyRides} bikes={bikes} distanceUnit="km" />);
+      fireEvent.click(screen.getByRole("button", { name: /next/i }));
+      expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
+    });
+
+    it("hides pagination when rides fit on one page", () => {
+      render(<AllRideList {...defaultProps} />);
+      expect(screen.queryByRole("button", { name: /next/i })).not.toBeInTheDocument();
+    });
+  });
 });
